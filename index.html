@@ -117,31 +117,90 @@ h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
 .ph-sep { flex: 1; }
 .panel-body { padding: 16px; }
 
-/* ── INPUT PANEL ── */
+/* ── LEFT PANEL ── */
 .input-panel { grid-row: 1 / 4; align-self: start; }
 
 .section-label {
   font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.09em;
   color: var(--ink-faint);
-  margin-bottom: 10px; margin-top: 18px;
+  margin-bottom: 10px; margin-top: 16px;
 }
 .section-label:first-child { margin-top: 0; }
 
-.field { margin-bottom: 12px; }
+/* ── TEMPLATE CARDS ── */
+.template-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.tpl-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 11px;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.tpl-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--tpl-color, var(--border));
+  border-radius: 8px 8px 0 0;
+}
+.tpl-card:hover { border-color: #bbb; background: #ebebeb; }
+.tpl-card.active {
+  border-color: var(--tpl-color, var(--blue));
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tpl-color, var(--blue)) 15%, transparent);
+}
+.tpl-name { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.2; margin-top: 2px; }
+.tpl-sub { font-size: 10px; color: var(--ink-faint); margin-top: 2px; line-height: 1.3; }
+.tpl-props { margin-top: 6px; display: flex; gap: 5px; flex-wrap: wrap; }
+.tpl-prop {
+  font-size: 9.5px; font-weight: 600;
+  color: var(--ink-muted);
+  background: rgba(0,0,0,0.04);
+  padding: 2px 5px; border-radius: 3px;
+}
+
+/* ── CUSTOM PARAMS SECTION ── */
+.custom-section {
+  margin-top: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.custom-section-header {
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.03);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+.custom-section-body { padding: 12px; }
+
+/* Input fields */
+.field { margin-bottom: 10px; }
 .field label {
   display: block;
-  font-size: 12px; font-weight: 600;
+  font-size: 11px; font-weight: 600;
   color: var(--ink-muted);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .input-wrap { position: relative; }
-.input-wrap input[type=text], .input-wrap input[type=number] {
+.input-wrap input[type=number] {
   width: 100%;
-  padding: 8px 48px 8px 12px;
+  padding: 7px 44px 7px 10px;
   border: 1.5px solid var(--border);
-  border-radius: 7px;
-  font-size: 14px; font-weight: 500;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 500;
   color: var(--ink);
   background: var(--surface);
   outline: none;
@@ -151,11 +210,10 @@ h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
 .input-wrap input::-webkit-outer-spin-button,
 .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .input-wrap input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,82,118,0.08); }
-.input-wrap input.invalid { border-color: var(--accent); }
 .input-unit {
-  position: absolute; right: 10px; top: 50%;
+  position: absolute; right: 9px; top: 50%;
   transform: translateY(-50%);
-  font-size: 11px; font-weight: 600;
+  font-size: 10px; font-weight: 600;
   color: var(--ink-faint); pointer-events: none;
 }
 
@@ -163,13 +221,13 @@ h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
 .material-toggle {
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   border: 1.5px solid var(--border);
-  border-radius: 8px; overflow: hidden;
-  margin-bottom: 12px;
+  border-radius: 7px; overflow: hidden;
+  margin-bottom: 10px;
 }
 .mat-btn {
-  padding: 8px 4px;
+  padding: 7px 4px;
   text-align: center;
-  font-size: 12px; font-weight: 600;
+  font-size: 11px; font-weight: 600;
   color: var(--ink-muted);
   cursor: pointer;
   border-right: 1px solid var(--border);
@@ -180,7 +238,7 @@ h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
 .mat-btn:last-child { border-right: none; }
 .mat-btn.active { background: var(--ink); color: #fff; }
 .mat-btn:not(.active):hover { background: var(--border); }
-.mat-sub { font-size: 10px; font-weight: 400; opacity: 0.65; display: block; margin-top: 1px; }
+.mat-sub { font-size: 9px; font-weight: 400; opacity: 0.65; display: block; margin-top: 1px; }
 
 /* Slider */
 .slider-field { margin-bottom: 12px; }
@@ -224,6 +282,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
   border-radius: 8px;
   padding: 11px 13px;
   display: flex; align-items: center; justify-content: space-between;
+  margin-top: 14px;
 }
 .wave-label { font-size: 11px; color: var(--ink-muted); font-weight: 600; }
 .wave-unit-label { font-size: 10px; color: var(--ink-faint); margin-top: 1px; }
@@ -231,7 +290,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .wave-value-unit { font-size: 11px; color: var(--ink-faint); }
 
 /* ── CHART PANEL ── */
-.chart-panel {}
 .chart-toolbar {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 16px;
@@ -372,87 +430,88 @@ footer {
 <!-- MAIN LAYOUT -->
 <div class="layout">
 
-  <!-- INPUT PANEL -->
+  <!-- LEFT PANEL: Template Selection + Controls -->
   <div class="panel input-panel">
     <div class="panel-header">
       <div class="panel-dot"></div>
-      <span class="panel-title">System Parameters</span>
+      <span class="panel-title">Fluid System</span>
     </div>
     <div class="panel-body">
 
-      <div class="section-label">Pipe Geometry</div>
-
-      <div class="field">
-        <label>Pipe Length</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-L" value="500" min="1" step="1">
-          <span class="input-unit">m</span>
-        </div>
+      <!-- Template cards -->
+      <div class="section-label" style="margin-top:0">Select a Scenario</div>
+      <div class="template-grid" id="template-grid">
+        <!-- Populated by JS -->
       </div>
 
-      <div class="field">
-        <label>Inner Diameter</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-d" value="150" min="1" step="1">
-          <span class="input-unit">mm</span>
-        </div>
-      </div>
+      <!-- Custom parameters (shown when Custom is active) -->
+      <div class="custom-section" id="custom-section" style="display:none">
+        <div class="custom-section-header">Custom Parameters</div>
+        <div class="custom-section-body">
 
-      <div class="field">
-        <label>Wall Thickness</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-t" value="8" min="0.1" step="0.1">
-          <span class="input-unit">mm</span>
-        </div>
-      </div>
+          <div class="field">
+            <label>Pipe Length</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-L" value="500" min="1" step="1">
+              <span class="input-unit">m</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Inner Diameter</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-d" value="150" min="1" step="1">
+              <span class="input-unit">mm</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Wall Thickness</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-t" value="8" min="0.1" step="0.1">
+              <span class="input-unit">mm</span>
+            </div>
+          </div>
 
-      <div class="section-label">Pipe Material</div>
-      <div class="material-toggle" id="material-toggle">
-        <div class="mat-btn active" data-mat="steel">Steel<span class="mat-sub">E = 200 GPa</span></div>
-        <div class="mat-btn" data-mat="pvc">PVC<span class="mat-sub">E = 2.8 GPa</span></div>
-        <div class="mat-btn" data-mat="copper">Copper<span class="mat-sub">E = 110 GPa</span></div>
+          <div class="material-toggle" id="material-toggle">
+            <div class="mat-btn active" data-mat="steel">Steel<span class="mat-sub">200 GPa</span></div>
+            <div class="mat-btn" data-mat="pvc">PVC<span class="mat-sub">2.8 GPa</span></div>
+            <div class="mat-btn" data-mat="copper">Copper<span class="mat-sub">110 GPa</span></div>
+          </div>
+
+          <div class="field">
+            <label>Flow Velocity (pre-closure)</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-v0" value="2.5" min="0.01" step="0.1">
+              <span class="input-unit">m/s</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Bulk Modulus <span style="font-weight:400;opacity:0.6">(water ≈ 2.2×10⁹)</span></label>
+            <div class="input-wrap">
+              <input type="number" id="inp-K" value="2200000000" min="100000000" step="100000000">
+              <span class="input-unit">Pa</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Fluid Density</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-rho" value="998" min="100" step="1">
+              <span class="input-unit">kg/m³</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Static Operating Pressure</label>
+            <div class="input-wrap">
+              <input type="number" id="inp-P0" value="2" min="0" step="0.5">
+              <span class="input-unit">bar</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="divider"></div>
 
-      <div class="section-label">Fluid Properties</div>
-
-      <div class="field">
-        <label>Flow Velocity (pre-closure)</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-v0" value="2.5" min="0.01" step="0.1">
-          <span class="input-unit">m/s</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Bulk Modulus</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-K" value="2.2e9" min="1e8" step="1e8">
-          <span class="input-unit">Pa</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Fluid Density</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-rho" value="998" min="100" step="1">
-          <span class="input-unit">kg/m³</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Static Operating Pressure</label>
-        <div class="input-wrap">
-          <input type="number" id="inp-P0" value="2" min="0" step="0.5">
-          <span class="input-unit">bar</span>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="section-label">Valve Closure</div>
-
+      <!-- Always-on: Valve closure slider -->
+      <div class="section-label" style="margin-top:0">Valve Closure</div>
       <div class="slider-field">
         <div class="slider-label-row">
           <span>Closure Time</span>
@@ -468,6 +527,7 @@ footer {
         </div>
       </div>
 
+      <!-- Always-on: Design pressure -->
       <div class="field">
         <label>Design Pressure Limit</label>
         <div class="input-wrap">
@@ -476,12 +536,11 @@ footer {
         </div>
       </div>
 
-      <div class="divider"></div>
-
+      <!-- Wave speed readout -->
       <div class="wave-readout">
         <div>
           <div class="wave-label">Wave Speed (Korteweg)</div>
-          <div class="wave-unit-label">a = √[K / (ρ·(1 + K·d/(E·t))]</div>
+          <div class="wave-unit-label">a = √[K / (ρ·(1 + K·d/(E·t)))]</div>
         </div>
         <div style="text-align:right">
           <div class="wave-value" id="wave-speed-display">—</div>
@@ -589,88 +648,98 @@ footer {
 // ═══════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════
+
 const MATERIALS = {
-  steel:  { E: 200e9,  label: 'Steel' },
-  pvc:    { E: 2.8e9,  label: 'PVC' },
-  copper: { E: 110e9,  label: 'Copper' }
+  steel:  { E: 200e9,  label: 'Steel',  sub: '200 GPa' },
+  pvc:    { E: 2.8e9,  label: 'PVC',    sub: '2.8 GPa' },
+  copper: { E: 110e9,  label: 'Copper', sub: '110 GPa' }
 };
 
-const N_POINTS = 600;
-const T_MAX    = 5.0;      // seconds shown on chart
-const ZETA     = 0.10;     // friction damping per wave return (dimensionless)
+// Fluid system presets — realistic chemical-plant scenarios
+const TEMPLATES = {
+  water: {
+    name: 'Utility Water',       sub: 'Steel pipe, cooling header',
+    L: 500,  d_mm: 150, t_mm: 8,  mat: 'steel',
+    rho: 998,  K: 2.2e9, v0: 3.0, P0_bar: 5,  Pdes_bar: 40,
+    color: '#1a5276'
+  },
+  crude: {
+    name: 'Crude Oil Pipeline',  sub: 'Long transmission line',
+    L: 1000, d_mm: 300, t_mm: 12, mat: 'steel',
+    rho: 860,  K: 1.5e9, v0: 2.0, P0_bar: 15, Pdes_bar: 80,
+    color: '#7e5109'
+  },
+  coolant: {
+    name: 'Process Coolant',     sub: 'Heat exchanger circuit',
+    L: 300,  d_mm: 100, t_mm: 6,  mat: 'steel',
+    rho: 1050, K: 2.1e9, v0: 2.5, P0_bar: 8,  Pdes_bar: 25,
+    color: '#1e8449'
+  },
+  condensate: {
+    name: 'Steam Condensate',    sub: 'Return header',
+    L: 200,  d_mm: 80,  t_mm: 5,  mat: 'steel',
+    rho: 940,  K: 2.0e9, v0: 1.5, P0_bar: 3,  Pdes_bar: 16,
+    color: '#6c3483'
+  },
+  pvc: {
+    name: 'PVC Water Line',      sub: 'Low-pressure distribution',
+    L: 200,  d_mm: 100, t_mm: 10, mat: 'pvc',
+    rho: 998,  K: 2.2e9, v0: 2.0, P0_bar: 4,  Pdes_bar: 16,
+    color: '#d68910'
+  },
+  custom: {
+    name: 'Custom',              sub: 'Edit parameters below',
+    L: 500,  d_mm: 150, t_mm: 8,  mat: 'steel',
+    rho: 998,  K: 2.2e9, v0: 2.5, P0_bar: 2,  Pdes_bar: 40,
+    color: '#6b6a76'
+  }
+};
 
-let currentMaterial = 'steel';
+const N_POINTS = 800;  // data points per series
+const ZETA     = 0.10; // friction damping per wave return (per T_ret)
+
+let activeTemplate = 'water';
+let customMaterial  = 'steel';
 let chart = null;
 
 // ═══════════════════════════════════════════════
 // PHYSICS ENGINE
 // ═══════════════════════════════════════════════
 
-/**
- * Korteweg (1878) wave speed formula for elastic pipe.
- * @param {number} K   - Bulk modulus of fluid [Pa]
- * @param {number} rho - Fluid density [kg/m³]
- * @param {number} d   - Inner diameter [m]
- * @param {number} E   - Young's modulus of pipe material [Pa]
- * @param {number} t   - Wall thickness [m]
- * @returns {number} Wave speed a [m/s]
- */
 function waveSpeed(K, rho, d, E, t) {
   const denominator = 1.0 + (K * d) / (E * t);
   return Math.sqrt(K / (rho * denominator));
 }
 
-/**
- * Joukowski (1898) instantaneous pressure rise.
- * Valid when valve closure time tc <= critical time T_crit = 2L/a.
- */
 function joukowskiDeltaP(rho, a, v0) {
   return rho * a * v0;
 }
 
-/**
- * Effective pressure rise accounting for gradual closure.
- * For tc > T_crit (= 2L/a), Allievi reduction applies.
- */
 function effectiveDeltaP(rho, a, v0, L, tc) {
   const T_crit = 2.0 * L / a;
-  const dP_joukowski = joukowskiDeltaP(rho, a, v0);
-  if (tc <= T_crit) {
-    return dP_joukowski;  // Full water hammer
-  } else {
-    // Allievi (1902) approximate reduction for slow closure
-    return dP_joukowski * (T_crit / tc);
-  }
+  const dP_j   = joukowskiDeltaP(rho, a, v0);
+  return tc <= T_crit ? dP_j : dP_j * (T_crit / tc);
 }
 
 /**
- * Generate pressure time-series at the valve location.
+ * Pressure time-series at the valve location.
  *
- * Physics basis:
- * - Instant closure produces a square wave at the valve:
- *     Phase 1 [0, 2L/a):     P = P0 + ΔP   (compression wave travelling upstream)
- *     Phase 2 [2L/a, 4L/a):  P = P0 - ΔP   (rarefaction returns after reservoir reflection)
- *     Period = 4L/a; friction causes exponential amplitude decay each half-cycle.
+ * Instant closure (tc ≤ T_ret):
+ *   Uses half-rectified cosine: spikes at t = n·T_ret with exponential decay.
+ *   P(t) = P0 + ΔP · max(0, cos(2π·t/T_ret)) · exp(−ζ·n)
+ *   where n = floor(t / T_ret)
+ *   This produces sharp sawtooth spikes that drop back to P0 between peaks.
  *
- * - Gradual closure (tc >= 2L/a) produces a smooth pressure build-up
- *   followed by smaller damped oscillations post-closure.
- *
- * Reference: Streeter & Wylie, "Fluid Transients", 1978, Chapters 2–3.
- *
- * @param {number} rho  - Fluid density [kg/m³]
- * @param {number} a    - Wave speed [m/s]
- * @param {number} v0   - Initial flow velocity [m/s]
- * @param {number} L    - Pipe length [m]
- * @param {number} P0   - Static pressure [Pa]
- * @param {number} tc   - Valve closure time [s]
- * @returns {{times: number[], pressures: number[]}}  pressures in [bar]
+ * Gradual closure (tc > T_ret):
+ *   During build-up (t ≤ tc): sinusoidal rise to peak.
+ *   After closure (t > tc): smaller damped half-rectified cosine oscillations.
  */
-function pressureTimeSeries(rho, a, v0, L, P0, tc) {
-  const T_ret  = 2.0 * L / a;       // Wave round-trip time [s]
-  const dP     = effectiveDeltaP(rho, a, v0, L, tc);  // [Pa]
+function pressureTimeSeries(rho, a, v0, L, P0, tc, tMax) {
+  const T_ret  = 2.0 * L / a;
+  const dP     = effectiveDeltaP(rho, a, v0, L, tc);
   const dP_bar = dP / 1e5;
   const P0_bar = P0 / 1e5;
-  const dt     = T_MAX / N_POINTS;
+  const dt     = tMax / N_POINTS;
 
   const times     = [];
   const pressures = [];
@@ -682,26 +751,25 @@ function pressureTimeSeries(rho, a, v0, L, P0, tc) {
     let P_bar;
 
     if (tc <= T_ret) {
-      // ── Near-instant closure: square wave with exponential decay ──
-      // At t=0 pressure jumps to P0+ΔP at the valve.
-      // Every T_ret, a reflected wave arrives and the sign flips.
-      const halfIdx  = Math.floor(t / T_ret);          // which half-cycle
-      const sign     = (halfIdx % 2 === 0) ? 1.0 : -1.0;
-      const decay    = Math.exp(-ZETA * halfIdx);
-      P_bar = P0_bar + sign * dP_bar * decay;
+      // ── Near-instant / rapid closure ──
+      // Sawtooth spike: positive half of cosine, decaying each wave return
+      const halfIdx = Math.floor(t / T_ret);
+      const decay   = Math.exp(-ZETA * halfIdx);
+      const cosVal  = Math.cos(2.0 * Math.PI * t / T_ret);
+      P_bar = P0_bar + dP_bar * Math.max(0, cosVal) * decay;
     } else {
-      // ── Gradual closure: smooth ramp then damped oscillation ──
-      if (t < tc) {
-        // During closure: sinusoidal build-up approximation
+      // ── Gradual closure ──
+      if (t <= tc) {
+        // Sinusoidal pressure build-up during valve travel
         const frac = t / tc;
-        P_bar = P0_bar + dP_bar * Math.sin((Math.PI / 2.0) * frac);
+        P_bar = P0_bar + dP_bar * Math.sin(0.5 * Math.PI * frac);
       } else {
-        // Post-closure: decaying cosine oscillations at valve
+        // Post-closure: smaller damped oscillations
         const t2      = t - tc;
         const halfIdx = Math.floor(t2 / T_ret);
-        const sign    = (halfIdx % 2 === 0) ? 1.0 : -1.0;
         const decay   = Math.exp(-ZETA * 1.5 * halfIdx);
-        P_bar = P0_bar + sign * dP_bar * 0.35 * decay;
+        const cosVal  = Math.cos(2.0 * Math.PI * t2 / T_ret);
+        P_bar = P0_bar + dP_bar * 0.40 * Math.max(0, cosVal) * decay;
       }
     }
 
@@ -711,9 +779,6 @@ function pressureTimeSeries(rho, a, v0, L, P0, tc) {
   return { times, pressures };
 }
 
-/**
- * Find peak pressure and the time at which it occurs.
- */
 function findPeak(times, pressures) {
   let peakP = -Infinity, peakT = 0;
   for (let i = 0; i < pressures.length; i++) {
@@ -726,25 +791,88 @@ function findPeak(times, pressures) {
 // INPUT HELPERS
 // ═══════════════════════════════════════════════
 
-function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function getNumVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
 
 function getParams() {
   const sliderPct = parseFloat(document.getElementById('slider-tc').value);
-  // Exponential mapping: 0→0.01s, 100→5s  (gives fine control at low end)
-  const tc = sliderPct === 0 ? 0.01 : 0.01 * Math.pow(5.0 / 0.01, sliderPct / 100);
+  const tc = sliderPct === 0 ? 0.01 : 0.01 * Math.pow(500, sliderPct / 100);
+  const Pdes_bar = getNumVal('inp-Pdes');
 
+  if (activeTemplate === 'custom') {
+    return {
+      L    : getNumVal('inp-L'),
+      d    : getNumVal('inp-d') / 1000,
+      t    : getNumVal('inp-t') / 1000,
+      d_mm : getNumVal('inp-d'),
+      E    : MATERIALS[customMaterial].E,
+      K    : getNumVal('inp-K'),
+      rho  : getNumVal('inp-rho'),
+      v0   : getNumVal('inp-v0'),
+      P0   : getNumVal('inp-P0') * 1e5,
+      Pdes : Pdes_bar * 1e5,
+      Pdes_bar,
+      tc
+    };
+  }
+
+  const tpl = TEMPLATES[activeTemplate];
   return {
-    L    : getVal('inp-L'),
-    d    : getVal('inp-d') / 1000,        // mm → m
-    t    : getVal('inp-t') / 1000,        // mm → m
-    E    : MATERIALS[currentMaterial].E,
-    K    : getVal('inp-K'),
-    rho  : getVal('inp-rho'),
-    v0   : getVal('inp-v0'),
-    P0   : getVal('inp-P0') * 1e5,        // bar → Pa
-    Pdes : getVal('inp-Pdes') * 1e5,      // bar → Pa
-    tc   : tc
+    L    : tpl.L,
+    d    : tpl.d_mm / 1000,
+    t    : tpl.t_mm / 1000,
+    d_mm : tpl.d_mm,
+    E    : MATERIALS[tpl.mat].E,
+    K    : tpl.K,
+    rho  : tpl.rho,
+    v0   : tpl.v0,
+    P0   : tpl.P0_bar * 1e5,
+    Pdes : Pdes_bar * 1e5,
+    Pdes_bar,
+    tc
   };
+}
+
+// ═══════════════════════════════════════════════
+// TEMPLATE CARD UI
+// ═══════════════════════════════════════════════
+
+function renderTemplateCards() {
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = Object.entries(TEMPLATES).map(([key, tpl]) => `
+    <div class="tpl-card ${key === activeTemplate ? 'active' : ''}"
+         style="--tpl-color:${tpl.color}"
+         onclick="selectTemplate('${key}')">
+      <div class="tpl-name">${tpl.name}</div>
+      <div class="tpl-sub">${tpl.sub}</div>
+      <div class="tpl-props">
+        ${key !== 'custom' ? `
+          <span class="tpl-prop">L=${tpl.L}m</span>
+          <span class="tpl-prop">d=${tpl.d_mm}mm</span>
+          <span class="tpl-prop">${tpl.mat.toUpperCase()}</span>
+        ` : '<span class="tpl-prop" style="opacity:0.6">user-defined</span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectTemplate(key) {
+  activeTemplate = key;
+  renderTemplateCards();
+
+  // Show/hide custom params section
+  document.getElementById('custom-section').style.display =
+    key === 'custom' ? '' : 'none';
+
+  // If a preset, load its Pdes into the input
+  if (key !== 'custom') {
+    const tpl = TEMPLATES[key];
+    document.getElementById('inp-Pdes').value = tpl.Pdes_bar;
+    // Reset slider to 0 (instant closure) on template change
+    document.getElementById('slider-tc').value = 0;
+    updateSliderLabel();
+  }
+
+  calculate();
 }
 
 // ═══════════════════════════════════════════════
@@ -770,28 +898,44 @@ function updateSliderLabel() {
 }
 
 // ═══════════════════════════════════════════════
-// CHART
+// CHART PLUGIN (risk zones + annotations)
 // ═══════════════════════════════════════════════
 
-const riskZonePlugin = {
-  id: 'riskZones',
-  beforeDraw(chart, args, options) {
-    const { ctx, scales: { x, y } } = chart;
-    const Pdes = options.Pdes || 40;
-    const Pwarn = options.Pwarn || (Pdes * 0.625);
-    const left = x.left, right = x.right;
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
-    // Safe zone: 0 → Pwarn
+const overlayPlugin = {
+  id: 'overlay',
+
+  // ── Before data: draw zone backgrounds + labels ──
+  beforeDraw(chart, args, opts) {
+    const { ctx, scales: { x, y } } = chart;
+    const Pdes  = opts.Pdes  || 40;
+    const Pwarn = opts.Pwarn || (Pdes * 0.625);
+    const left  = x.left, right = x.right;
+
+    // Safe zone background
     ctx.fillStyle = 'rgba(30,132,73,0.07)';
     ctx.fillRect(left, y.getPixelForValue(Pwarn), right - left,
-                 y.getPixelForValue(0) - y.getPixelForValue(Pwarn));
+                 y.getPixelForValue(Math.max(y.min, 0)) - y.getPixelForValue(Pwarn));
 
-    // Warning zone: Pwarn → Pdes
+    // Warning zone background
     ctx.fillStyle = 'rgba(214,137,16,0.09)';
     ctx.fillRect(left, y.getPixelForValue(Pdes), right - left,
                  y.getPixelForValue(Pwarn) - y.getPixelForValue(Pdes));
 
-    // Critical zone: Pdes → yMax
+    // Critical zone background
     ctx.fillStyle = 'rgba(192,57,43,0.07)';
     ctx.fillRect(left, y.getPixelForValue(y.max), right - left,
                  y.getPixelForValue(Pdes) - y.getPixelForValue(y.max));
@@ -799,7 +943,7 @@ const riskZonePlugin = {
     // Design limit dashed line
     const yLine = y.getPixelForValue(Pdes);
     ctx.save();
-    ctx.strokeStyle = 'rgba(214,137,16,0.7)';
+    ctx.strokeStyle = 'rgba(214,137,16,0.8)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 4]);
     ctx.beginPath();
@@ -808,23 +952,131 @@ const riskZonePlugin = {
     ctx.stroke();
     ctx.restore();
 
-    // Design limit label
-    ctx.fillStyle = 'rgba(214,137,16,0.85)';
-    ctx.font = '600 10px system-ui';
+    // Zone text labels (right-aligned, inside chart)
+    ctx.save();
+    ctx.font = '700 9px system-ui';
     ctx.textAlign = 'right';
-    ctx.fillText(`Design limit: ${Pdes} bar`, right - 4, yLine - 4);
-    ctx.textAlign = 'left';
+
+    // CRITICAL label
+    const critMidPx = (y.getPixelForValue(y.max) + y.getPixelForValue(Pdes)) / 2;
+    if (critMidPx > y.top + 10 && critMidPx < yLine - 5) {
+      ctx.fillStyle = 'rgba(192,57,43,0.50)';
+      ctx.fillText('CRITICAL — Above Design Pressure', right - 6, critMidPx + 4);
+    }
+
+    // WARNING label
+    const warnMidPx = (y.getPixelForValue(Pdes) + y.getPixelForValue(Pwarn)) / 2;
+    if (warnMidPx > yLine + 5) {
+      ctx.fillStyle = 'rgba(214,137,16,0.55)';
+      ctx.fillText('WARNING — Approaching Limit', right - 6, warnMidPx + 4);
+    }
+
+    // Design limit label
+    ctx.fillStyle = 'rgba(214,137,16,0.9)';
+    ctx.font = '600 10px system-ui';
+    ctx.fillText(`Design limit: ${Pdes} bar`, right - 4, yLine - 5);
+
+    // SAFE ZONE label
+    const safeTopPx  = y.getPixelForValue(Pwarn);
+    const safeBotPx  = y.getPixelForValue(Math.max(y.min, 0));
+    const safeMidPx  = (safeTopPx + safeBotPx) / 2;
+    if (safeMidPx < safeBotPx - 5) {
+      ctx.fillStyle = 'rgba(30,132,73,0.45)';
+      ctx.font = '700 9px system-ui';
+      ctx.fillText('SAFE ZONE', right - 6, safeMidPx + 4);
+    }
+
+    ctx.restore();
+  },
+
+  // ── After data: draw peak annotations + period marker ──
+  afterDraw(chart, args, opts) {
+    if (!opts.peaks || !opts.T_osc) return;
+
+    const { ctx, scales: { x, y }, chartArea: ca } = chart;
+
+    // Period marker — vertical dashed line at t = T_osc
+    const T_osc = opts.T_osc;
+    if (T_osc > 0 && T_osc <= x.max) {
+      const xPx = x.getPixelForValue(T_osc);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(100,100,130,0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(xPx, ca.top);
+      ctx.lineTo(xPx, ca.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Label at top
+      ctx.fillStyle = 'rgba(100,100,130,0.65)';
+      ctx.font = '600 9px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`T = ${T_osc.toFixed(2)} s`, xPx, ca.top + 11);
+      ctx.restore();
+    }
+
+    // Peak annotation boxes — stacked in top-right corner
+    const boxW = 148, boxH = 38, boxR = 5;
+    const boxX = ca.right - boxW - 6;
+    const annotations = [
+      { peak: opts.peaks[0], color: '#c0392b', label: 'Instant' },
+      { peak: opts.peaks[1], color: '#1a5276', label: 'Current' }
+    ];
+
+    annotations.forEach((ann, i) => {
+      if (!ann.peak) return;
+      const boxY = ca.top + 6 + i * (boxH + 5);
+
+      ctx.save();
+
+      // Box background
+      ctx.fillStyle = 'rgba(255,255,255,0.93)';
+      roundRect(ctx, boxX, boxY, boxW, boxH, boxR);
+      ctx.fill();
+
+      // Box border
+      ctx.strokeStyle = ann.color;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, boxX, boxY, boxW, boxH, boxR);
+      ctx.stroke();
+
+      // Colored left accent bar
+      ctx.fillStyle = ann.color;
+      roundRect(ctx, boxX, boxY, 4, boxH, [boxR, 0, 0, boxR]);
+      ctx.fill();
+
+      // Label and values
+      ctx.fillStyle = ann.color;
+      ctx.font = '700 9.5px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${ann.label.toUpperCase()} — PEAK`, boxX + 10, boxY + 13);
+
+      ctx.fillStyle = '#1c1c2a';
+      ctx.font = '700 11px system-ui';
+      ctx.fillText(`${ann.peak.P.toFixed(1)} bar`, boxX + 10, boxY + 27);
+
+      ctx.fillStyle = '#6b6a76';
+      ctx.font = '600 9.5px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(`@ t = ${ann.peak.t.toFixed(3)} s`, boxX + boxW - 8, boxY + 27);
+
+      ctx.restore();
+    });
   }
 };
 
+// ═══════════════════════════════════════════════
+// CHART INIT
+// ═══════════════════════════════════════════════
+
 function initChart() {
   const ctx = document.getElementById('pressureChart').getContext('2d');
-  Chart.register(riskZonePlugin);
+  Chart.register(overlayPlugin);
 
   chart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: [],
       datasets: [
         {
           label: 'Instant Closure',
@@ -832,7 +1084,7 @@ function initChart() {
           borderColor: '#c0392b',
           borderWidth: 2.5,
           pointRadius: 0,
-          tension: 0.1,
+          tension: 0,
           fill: false,
           order: 2
         },
@@ -843,20 +1095,20 @@ function initChart() {
           borderWidth: 2.2,
           borderDash: [8, 4],
           pointRadius: 0,
-          tension: 0.15,
+          tension: 0,
           fill: false,
           order: 1
         }
       ]
     },
     options: {
-      animation: { duration: 280, easing: 'easeOutQuart' },
+      animation: { duration: 250, easing: 'easeOutQuart' },
       responsive: true,
       maintainAspectRatio: true,
       aspectRatio: 2.4,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        riskZones: { Pdes: 40, Pwarn: 25 },
+        overlay: { Pdes: 40, Pwarn: 25, T_osc: 0, peaks: null },
         legend: { display: false },
         tooltip: {
           backgroundColor: '#1c1c2a',
@@ -864,18 +1116,19 @@ function initChart() {
           bodyColor: 'rgba(255,255,255,0.7)',
           padding: 10,
           callbacks: {
-            title: items => `t = ${items[0].label} s`,
-            label: item => ` ${item.dataset.label}: ${item.raw} bar`
+            title: items => `t = ${(items[0].parsed.x).toFixed(3)} s`,
+            label: item => ` ${item.dataset.label}: ${item.parsed.y.toFixed(2)} bar`
           }
         }
       },
       scales: {
         x: {
+          type: 'linear',
           title: { display: true, text: 'Time (seconds)', color: '#6b6a76', font: { size: 11, weight: '600' } },
           grid: { color: 'rgba(0,0,0,0.05)' },
           ticks: {
             color: '#a09fa8', font: { size: 10 }, maxTicksLimit: 11,
-            callback: v => parseFloat(v).toFixed(1)
+            callback: v => Number(v).toFixed(2)
           }
         },
         y: {
@@ -893,174 +1146,181 @@ function initChart() {
 // PIPE DIAGRAM (SVG)
 // ═══════════════════════════════════════════════
 
-function renderPipeDiagram(a, L, v0, rho, T_ret, dP_bar, P0_bar) {
+function renderPipeDiagram(a, L, d_mm, v0, T_ret, dP_bar, P0_bar) {
   const svg = document.getElementById('pipe-svg');
   document.getElementById('pipe-param-label').textContent =
     `a = ${Math.round(a)} m/s  ·  L = ${L} m  ·  T_ret = ${T_ret.toFixed(3)} s`;
 
-  const W = 760, stageH = 82, gap = 6;
-  const totalH = stageH * 3 + gap * 2 + 10;
+  const W      = 760;
+  const stageH = 92;
+  const gap    = 10;
+  const totalH = stageH * 3 + gap * 2;
   svg.setAttribute('viewBox', `0 0 ${W} ${totalH}`);
 
-  const pipeX = 38, pipeW = 636, valveX = 672;
-  const pipeTop = 12, pipeBot = 26, fluidTop = 20, fluidH = 10;
+  const pipeX    = 38;
+  const pipeW    = 620;
+  const valveX   = pipeX + pipeW + 4;
+  const LABEL_H  = 22;
+  const PIPE_OFF = 26;   // pipe top wall starts 26px below yBase (22px label + 4px gap)
+  const WALL_H   = 8;
+  const FLUID_H  = 16;
+  const FLUID_OFF = PIPE_OFF + WALL_H;         // 34
+  const PIPE_BOT  = FLUID_OFF + FLUID_H;       // 50
+  const NOTE_Y    = FLUID_OFF + FLUID_H / 2 + 4; // 52 — vertically centred in fluid zone
+  const DIM_Y     = stageH - 14;
 
   const stages = [
     {
-      label: `t = 0  —  Valve Closes  (ΔP = ${dP_bar.toFixed(1)} bar)`,
+      label: `t = 0  —  Valve Closes  (ΔP = +${dP_bar.toFixed(1)} bar)`,
       labelFill: '#c0392b',
-      fluidFill: '#c0392b', fluidOpacity: 0.14,
-      fluidX: valveX - 80, fluidW: 80,  // high-P only at valve end
+      fluidFill: '#c0392b', fluidOpacity: 0.18,
+      fluidX: valveX - 90, fluidW: 90,
       flowArrows: true,
-      waveDir: null,
-      valveState: 'CLOSED',
-      note: `Pressure wave generated: +${dP_bar.toFixed(1)} bar`,
+      waveArrow: null,
+      note: `Compression wave generated at valve  →  travelling upstream at a = ${Math.round(a)} m/s`,
+      noteColor: '#922b21',
     },
     {
-      label: `t = L/a = ${(L/a).toFixed(3)} s  —  Wave Reaches Reservoir, Reflection Begins`,
+      label: `t = L/a = ${(L/a).toFixed(3)} s  —  Wave Reaches Reservoir, Rarefaction Reflected`,
       labelFill: '#d68910',
-      fluidFill: '#c0392b', fluidOpacity: 0.11,
-      fluidX: pipeX, fluidW: pipeW,     // high-P throughout
+      fluidFill: '#c0392b', fluidOpacity: 0.13,
+      fluidX: pipeX, fluidW: pipeW,
       flowArrows: false,
-      waveDir: 'right',                  // reflected rarefaction going right
-      valveState: 'CLOSED',
-      note: `Entire pipe at elevated pressure; rarefaction wave reflected →`,
+      waveArrow: 'right',
+      note: `Entire pipe at elevated pressure (+${dP_bar.toFixed(1)} bar)  |  rarefaction wave now travels downstream →`,
+      noteColor: '#7d6608',
     },
     {
-      label: `t = 2L/a = ${(2*L/a).toFixed(3)} s  —  Rarefaction Reaches Valve, Cycle Repeats`,
+      label: `t = 2L/a = ${(2*L/a).toFixed(3)} s  —  Rarefaction at Valve, Cycle Repeats  (T = ${(4*L/a).toFixed(3)} s)`,
       labelFill: '#1a5276',
-      fluidFill: '#1a5276', fluidOpacity: 0.07,
-      fluidX: pipeX, fluidW: pipeW * 0.55,
+      fluidFill: '#1a5276', fluidOpacity: 0.08,
+      fluidX: pipeX, fluidW: pipeW * 0.6,
       flowArrows: false,
-      waveDir: null,
-      valveState: 'CLOSED',
-      note: `Pressure drops to ≈ P₀ − ΔP at valve; period T = 4L/a = ${(4*L/a).toFixed(3)} s`,
+      waveArrow: null,
+      note: `Pressure at valve drops to P₀ − ΔP  |  oscillation frequency f = ${(a/(4*L)).toFixed(3)} Hz`,
+      noteColor: '#154360',
     }
   ];
 
-  let svgContent = `<defs>
-    <marker id="arR" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
-      <polygon points="0 0,7 3,0 6" fill="#d68910"/>
+  let svg_html = `<defs>
+    <marker id="arRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#c0392b"/>
+    </marker>
+    <marker id="arAmb" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#d68910"/>
+    </marker>
+    <marker id="arBlu" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#1a5276"/>
     </marker>
   </defs>`;
 
   stages.forEach((s, idx) => {
-    const yBase = idx * (stageH + gap);
-    const pT = yBase + pipeTop;
-    const pB = yBase + pipeBot;
-    const fT = yBase + fluidTop;
-    const labelY = yBase + 14;
+    const yB = idx * (stageH + gap);
+    const pT = yB + PIPE_OFF;
+    const fT = yB + FLUID_OFF;
+    const nY = yB + NOTE_Y;
+    const dY = yB + DIM_Y;
 
-    // Stage label
-    svgContent += `<rect x="0" y="${yBase}" width="250" height="20" rx="4" fill="${s.labelFill}"/>`;
-    svgContent += `<text x="7" y="${labelY}" font-size="10" fill="#fff" font-weight="700">${s.label}</text>`;
+    // Label banner
+    svg_html += `<rect x="0" y="${yB}" width="${W}" height="${LABEL_H}" rx="4" fill="${s.labelFill}"/>`;
+    svg_html += `<text x="10" y="${yB + 15}" font-size="10.5" fill="#fff" font-weight="700"
+      dominant-baseline="auto">${s.label}</text>`;
 
-    // Reservoir
-    svgContent += `<rect x="8" y="${pT}" width="20" height="${pipeBot - pipeTop + fluidH}" rx="3" fill="#1a5276" opacity="0.16" stroke="#1a5276" stroke-width="1.3"/>`;
-    svgContent += `<text x="18" y="${yBase + stageH - 3}" font-size="8" fill="#1a5276" font-weight="700" text-anchor="middle">RES.</text>`;
+    // Reservoir block
+    const resX = 6, resW = pipeX - resX - 2;
+    svg_html += `<rect x="${resX}" y="${pT}" width="${resW}" height="${WALL_H + FLUID_H + WALL_H}" rx="3"
+      fill="#1a5276" opacity="0.14" stroke="#1a5276" stroke-width="1.2"/>`;
+    svg_html += `<text x="${resX + resW/2}" y="${pT + WALL_H + FLUID_H/2 + 4}" font-size="7.5"
+      fill="#1a5276" font-weight="700" text-anchor="middle">RES.</text>`;
 
-    // Pipe walls (top, bottom)
-    svgContent += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="8" rx="2" fill="#c0bfb6"/>`;
-    svgContent += `<rect x="${pipeX}" y="${pB}" width="${pipeW}" height="8" rx="2" fill="#c0bfb6"/>`;
-    svgContent += `<rect x="${pipeX}" y="${pT + 1}" width="${pipeW}" height="3" rx="1" fill="rgba(255,255,255,0.45)"/>`;
+    // Pipe walls
+    svg_html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
+    svg_html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="3" rx="1" fill="rgba(255,255,255,0.5)"/>`;
+    svg_html += `<rect x="${pipeX}" y="${PIPE_BOT + yB}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
 
-    // Fluid fill zone
-    svgContent += `<rect x="${s.fluidX}" y="${fT}" width="${s.fluidW}" height="${fluidH}" fill="${s.fluidFill}" opacity="${s.fluidOpacity}"/>`;
+    // Fluid zone
+    svg_html += `<rect x="${pipeX}" y="${fT}" width="${pipeW}" height="${FLUID_H}" fill="#e8e6df" opacity="0.6"/>`;
+    svg_html += `<rect x="${s.fluidX}" y="${fT}" width="${s.fluidW}" height="${FLUID_H}"
+      fill="${s.fluidFill}" opacity="${s.fluidOpacity}"/>`;
 
-    // Note text inside pipe
-    svgContent += `<text x="${pipeX + pipeW/2}" y="${fT + 7}" font-size="7.5" fill="${s.labelFill}" font-weight="600" text-anchor="middle" opacity="0.9">${s.note}</text>`;
+    // Note text
+    svg_html += `<text x="${pipeX + pipeW/2}" y="${nY}" font-size="8.5"
+      fill="${s.noteColor}" font-weight="600" text-anchor="middle">${s.note}</text>`;
 
-    // Flow arrows (stage 0 only)
+    // Flow arrows (stage 0 only) — placed BELOW the upper pipe wall, inside fluid zone
     if (s.flowArrows) {
-      [[160,fT+5],[300,fT+5],[440,fT+5]].forEach(([ax,ay]) => {
-        svgContent += `<polygon points="${ax},${ay-3} ${ax+14},${ay-3} ${ax+14},${ay-5} ${ax+20},${ay} ${ax+14},${ay+5} ${ax+14},${ay+3} ${ax},${ay+3}" fill="#1a5276" opacity="0.35"/>`;
+      const midY = fT + FLUID_H / 2;
+      [160, 300, 430].forEach(ax => {
+        svg_html += `<line x1="${ax}" y1="${midY}" x2="${ax+28}" y2="${midY}"
+          stroke="#1a5276" stroke-width="2" opacity="0.45" marker-end="url(#arBlu)"/>`;
       });
-      svgContent += `<text x="${pipeX + pipeW*0.4}" y="${pT - 2}" font-size="7.5" fill="#1a5276" font-weight="600" text-anchor="middle">v₀ = ${v0} m/s →</text>`;
+      // Velocity label — above pipe, in label area
+      svg_html += `<text x="${pipeX + pipeW * 0.45}" y="${yB + 14}" font-size="8.5"
+        fill="#fff" font-weight="700" text-anchor="middle" opacity="0.85">v₀ = ${v0} m/s →</text>`;
     }
 
-    // Wave direction arrow (stage 1)
-    if (s.waveDir === 'right') {
-      const wx = pipeX + 30;
-      svgContent += `<line x1="${wx}" y1="${fT+5}" x2="${wx+120}" y2="${fT+5}" stroke="#d68910" stroke-width="2" marker-end="url(#arR)"/>`;
-      svgContent += `<text x="${wx+62}" y="${fT - 2}" font-size="7.5" fill="#d68910" font-weight="700" text-anchor="middle">reflected wave →</text>`;
+    // Reflected wave arrow (stage 1 only)
+    if (s.waveArrow === 'right') {
+      const midY = fT + FLUID_H / 2;
+      const arrowLen = 150;
+      svg_html += `<line x1="${pipeX + 15}" y1="${midY}" x2="${pipeX + 15 + arrowLen}" y2="${midY}"
+        stroke="#d68910" stroke-width="2" marker-end="url(#arAmb)"/>`;
     }
 
     // Valve
-    const vc = '#c0392b';
-    svgContent += `<rect x="${valveX}" y="${pT - 4}" width="14" height="${pipeBot - pipeTop + fluidH + 8}" rx="3" fill="${vc}" opacity="0.88"/>`;
-    svgContent += `<line x1="${valveX+7}" y1="${pT - 4}" x2="${valveX+7}" y2="${pB + 4}" stroke="#fff" stroke-width="1.4"/>`;
-    svgContent += `<text x="${valveX+19}" y="${fT+3}" font-size="7.5" fill="${vc}" font-weight="700">VALVE</text>`;
-    svgContent += `<text x="${valveX+19}" y="${fT+12}" font-size="7" fill="${vc}">${s.valveState}</text>`;
+    const vH = WALL_H * 2 + FLUID_H + 6;
+    svg_html += `<rect x="${valveX}" y="${pT - 3}" width="14" height="${vH}" rx="3"
+      fill="#c0392b" opacity="0.9"/>`;
+    svg_html += `<line x1="${valveX+7}" y1="${pT - 3}" x2="${valveX+7}" y2="${pT - 3 + vH}"
+      stroke="#fff" stroke-width="1.5"/>`;
+    svg_html += `<text x="${valveX + 19}" y="${fT + 5}" font-size="7.5" fill="#c0392b" font-weight="700">VALVE</text>`;
+    svg_html += `<text x="${valveX + 19}" y="${fT + 14}" font-size="7" fill="#c0392b">CLOSED</text>`;
 
-    // Dimension line
-    const dlY = yBase + stageH - 12;
-    svgContent += `<line x1="${pipeX}" y1="${dlY}" x2="${valveX}" y2="${dlY}" stroke="#b8b6ae" stroke-width="0.8"/>`;
-    svgContent += `<line x1="${pipeX}" y1="${dlY-3}" x2="${pipeX}" y2="${dlY+3}" stroke="#b8b6ae" stroke-width="0.8"/>`;
-    svgContent += `<line x1="${valveX}" y1="${dlY-3}" x2="${valveX}" y2="${dlY+3}" stroke="#b8b6ae" stroke-width="0.8"/>`;
-    svgContent += `<text x="${pipeX + pipeW/2}" y="${dlY + 10}" font-size="8" fill="#a09fa8" font-weight="500" text-anchor="middle">L = ${L} m</text>`;
+    // Dimension line — L dimension
+    svg_html += `<line x1="${pipeX}" y1="${dY}" x2="${valveX}" y2="${dY}" stroke="#c0bfb6" stroke-width="0.8"/>`;
+    svg_html += `<line x1="${pipeX}" y1="${dY-3}" x2="${pipeX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.8"/>`;
+    svg_html += `<line x1="${valveX}" y1="${dY-3}" x2="${valveX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.8"/>`;
+    svg_html += `<text x="${pipeX + pipeW/2}" y="${dY + 11}" font-size="8" fill="#b0afa8"
+      font-weight="600" text-anchor="middle">L = ${L} m  |  d = ${d_mm} mm  |  a = ${Math.round(a)} m/s</text>`;
   });
 
-  svg.innerHTML = svgContent;
+  svg.innerHTML = svg_html;
 }
 
 // ═══════════════════════════════════════════════
 // METRICS UPDATE
 // ═══════════════════════════════════════════════
 
-function setMetric(id, value, unit = '') {
-  document.getElementById(id).textContent = value;
-}
+function setMetric(id, value) { document.getElementById(id).textContent = value; }
 
 function setStatus(cardId, badgeId, level, badgeText) {
-  const card  = document.getElementById(cardId);
+  document.getElementById(cardId).className  = `metric-card ${level}`;
   const badge = document.getElementById(badgeId);
-  card.className  = `metric-card ${level}`;
-  badge.className = `metric-badge badge-${level}`;
+  badge.className  = `metric-badge badge-${level}`;
   badge.textContent = badgeText;
 }
 
-function updateMetrics(a, L, v0, rho, tc, P0_bar, Pdes_bar, dP_bar, peakP, peakT) {
-  // Peak pressure
+function updateMetrics(a, L, tc, P0_bar, Pdes_bar, peakP, peakT) {
   setMetric('met-peak', peakP.toFixed(1));
-  setMetric('met-peak-sub', `vs ${(P0_bar).toFixed(1)} bar static`);
-  if (peakP <= Pdes_bar * 0.625) {
-    setStatus('card-peak', 'badge-peak', 'safe', 'Safe');
-  } else if (peakP <= Pdes_bar) {
-    setStatus('card-peak', 'badge-peak', 'warn', 'Warning');
-  } else {
-    setStatus('card-peak', 'badge-peak', 'crit', 'Critical');
-  }
+  setMetric('met-peak-sub', `vs ${P0_bar.toFixed(1)} bar static`);
+  if      (peakP <= Pdes_bar * 0.625) setStatus('card-peak', 'badge-peak', 'safe', 'Safe');
+  else if (peakP <= Pdes_bar)         setStatus('card-peak', 'badge-peak', 'warn', 'Warning');
+  else                                setStatus('card-peak', 'badge-peak', 'crit', 'Critical');
 
-  // Time to peak
   setMetric('met-tpeak', peakT.toFixed(3));
   setMetric('met-tpeak-sub', `Wave return: ${(2*L/a).toFixed(3)} s`);
   document.getElementById('badge-time').textContent = peakT < 0.5 ? 'Rapid' : 'Gradual';
 
-  // Oscillation period T = 4L/a
   const T_osc = 4.0 * L / a;
   setMetric('met-freq', T_osc.toFixed(3));
   setMetric('met-freq-sub', `f = ${(1/T_osc).toFixed(3)} Hz  |  T_ret = ${(2*L/a).toFixed(3)} s`);
 
-  // Safety margin
   const margin = ((Pdes_bar - peakP) / Pdes_bar) * 100;
   setMetric('met-margin', margin.toFixed(1));
   setMetric('met-margin-sub', `Peak: ${peakP.toFixed(1)} bar vs ${Pdes_bar.toFixed(1)} bar limit`);
-  if (margin >= 30) {
-    setStatus('card-margin', 'badge-margin', 'safe', 'Adequate');
-  } else if (margin >= 0) {
-    setStatus('card-margin', 'badge-margin', 'warn', 'Tight');
-  } else {
-    setStatus('card-margin', 'badge-margin', 'crit', 'Exceeded');
-  }
-}
-
-// ═══════════════════════════════════════════════
-// WAVE SPEED DISPLAY
-// ═══════════════════════════════════════════════
-
-function updateWaveSpeedDisplay(a) {
-  document.getElementById('wave-speed-display').textContent =
-    isFinite(a) ? Math.round(a).toLocaleString() : '—';
+  if      (margin >= 30) setStatus('card-margin', 'badge-margin', 'safe', 'Adequate');
+  else if (margin >= 0)  setStatus('card-margin', 'badge-margin', 'warn', 'Tight');
+  else                   setStatus('card-margin', 'badge-margin', 'crit', 'Exceeded');
 }
 
 // ═══════════════════════════════════════════════
@@ -1070,9 +1330,8 @@ function updateWaveSpeedDisplay(a) {
 function calculate() {
   const p = getParams();
 
-  // Validate inputs
   if (p.L <= 0 || p.d <= 0 || p.t <= 0 || p.K <= 0 || p.rho <= 0 || p.v0 <= 0) {
-    alert('Please enter valid positive values for all inputs.');
+    alert('Please enter valid positive values for all parameters.');
     return;
   }
   if (p.t >= p.d / 2) {
@@ -1080,67 +1339,69 @@ function calculate() {
     return;
   }
 
-  // ── Physics calculations ──
-  const a      = waveSpeed(p.K, p.rho, p.d, p.E, p.t);
-  const T_ret  = 2.0 * p.L / a;
-  const dP     = effectiveDeltaP(p.rho, a, p.v0, p.L, p.tc);
-  const dP_bar = dP / 1e5;
-  const P0_bar = p.P0 / 1e5;
-  const Pdes_bar = p.Pdes / 1e5;
+  const a        = waveSpeed(p.K, p.rho, p.d, p.E, p.t);
+  const T_ret    = 2.0 * p.L / a;
+  const T_osc    = 4.0 * p.L / a;
+  const dP       = effectiveDeltaP(p.rho, a, p.v0, p.L, p.tc);
+  const dP_bar   = dP / 1e5;
+  const P0_bar   = p.P0 / 1e5;
+  const Pdes_bar = p.Pdes_bar;
 
-  // Generate series: instant closure (tc=0.01) + current tc
-  const instant  = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, 0.01);
-  const current  = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, p.tc);
+  // Chart window: always show at least 2.5 full oscillation cycles
+  const tMax = Math.max(5.0, parseFloat((T_osc * 2.5).toFixed(2)));
 
-  const { peakP: instPeak, peakT: instPeakT } = findPeak(instant.times, instant.pressures);
-  const { peakP, peakT }                       = findPeak(current.times, current.pressures);
+  // Generate both series
+  const instant = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, 0.01, tMax);
+  const current = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, p.tc,  tMax);
 
-  // ── Update wave speed readout ──
-  updateWaveSpeedDisplay(a);
+  const instPeak = findPeak(instant.times, instant.pressures);
+  const currPeak = findPeak(current.times,  current.pressures);
 
-  // ── Update chart ──
-  const Pmax = Math.max(
-    Math.max(...instant.pressures),
-    Math.max(...current.pressures),
-    Pdes_bar + 5
-  );
-  const Pmin = Math.min(
-    Math.min(...instant.pressures),
-    Math.min(...current.pressures),
-    P0_bar - 2,
-    0
-  );
+  // Wave speed readout
+  document.getElementById('wave-speed-display').textContent =
+    isFinite(a) ? Math.round(a).toLocaleString() : '—';
 
-  chart.data.labels        = instant.times;
-  chart.data.datasets[0].data = instant.pressures;
-  chart.data.datasets[1].data = current.pressures;
+  // Update chart
+  const toXY = (ts, ps) => ts.map((t, i) => ({ x: t, y: ps[i] }));
+
+  const Pmax = Math.max(...instant.pressures, ...current.pressures, Pdes_bar + 5);
+  const Pmin = Math.min(...instant.pressures, ...current.pressures, P0_bar - 2, 0);
+
+  chart.data.datasets[0].data  = toXY(instant.times, instant.pressures);
+  chart.data.datasets[1].data  = toXY(current.times,  current.pressures);
   chart.data.datasets[1].label = `Closure: ${p.tc.toFixed(2)} s`;
+  chart.data.datasets[1].borderDash = p.tc <= 0.02 ? [] : [8, 4];
 
-  chart.options.plugins.riskZones.Pdes  = Pdes_bar;
-  chart.options.plugins.riskZones.Pwarn = Pdes_bar * 0.625;
+  chart.options.plugins.overlay.Pdes   = Pdes_bar;
+  chart.options.plugins.overlay.Pwarn  = Pdes_bar * 0.625;
+  chart.options.plugins.overlay.T_osc  = T_osc;
+  chart.options.plugins.overlay.peaks  = [
+    { P: instPeak.peakP, t: instPeak.peakT },
+    { P: currPeak.peakP, t: currPeak.peakT }
+  ];
+
+  chart.options.scales.x.min = 0;
+  chart.options.scales.x.max = tMax;
   chart.options.scales.y.min = Math.floor(Pmin) - 1;
-  chart.options.scales.y.max = Math.ceil(Pmax) + 2;
+  chart.options.scales.y.max = Math.ceil(Pmax)  + 2;
 
-  chart.update();
+  chart.update('active');
 
-  // ── Update metrics (show current closure scenario) ──
-  updateMetrics(a, p.L, p.v0, p.rho, p.tc, P0_bar, Pdes_bar, dP_bar, peakP, peakT);
-
-  // ── Update pipe diagram ──
-  renderPipeDiagram(a, p.L, p.v0, p.rho, T_ret, dP_bar, P0_bar);
+  updateMetrics(a, p.L, p.tc, P0_bar, Pdes_bar, currPeak.peakP, currPeak.peakT);
+  renderPipeDiagram(a, p.L, p.d_mm, p.v0, T_ret, dP_bar, P0_bar);
 }
 
 // ═══════════════════════════════════════════════
 // EVENT LISTENERS
 // ═══════════════════════════════════════════════
 
-// Material toggle
+// Material toggle (inside custom section)
 document.querySelectorAll('.mat-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.mat-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentMaterial = btn.dataset.mat;
-    calculate();
+    customMaterial = btn.dataset.mat;
+    if (activeTemplate === 'custom') calculate();
   });
 });
 
@@ -1150,16 +1411,26 @@ document.getElementById('slider-tc').addEventListener('input', () => {
   calculate();
 });
 
-// All numeric inputs — recalculate on change
-['inp-L','inp-d','inp-t','inp-v0','inp-K','inp-rho','inp-P0','inp-Pdes'].forEach(id => {
-  document.getElementById(id).addEventListener('change', calculate);
+// Design pressure — recalculate on change
+document.getElementById('inp-Pdes').addEventListener('change', calculate);
+
+// Custom param inputs
+['inp-L','inp-d','inp-t','inp-v0','inp-K','inp-rho','inp-P0'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (activeTemplate === 'custom') calculate();
+  });
 });
 
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 
+renderTemplateCards();
 initChart();
+
+// Load default template values into Pdes input
+document.getElementById('inp-Pdes').value = TEMPLATES[activeTemplate].Pdes_bar;
+
 updateSliderLabel();
 calculate();
 </script>

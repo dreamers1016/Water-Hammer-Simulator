@@ -198,6 +198,56 @@ The pipe diagram is generated as an SVG string, not pre-defined in HTML. This al
 **Bug:** If wall thickness ≥ inner radius (t ≥ d/2), the pipe would be physically impossible but the formula would still return a number.
 
 **Fix:** Added validation in `calculate()`:
+
+### 5. Bulk Modulus Scientific Notation Rejected by Browser Inputs
+
+**Bug:** `value="2.2e9"` on `<input type="number">` — browsers do not reliably parse scientific notation in the HTML `value` attribute. `input.value` returned `""`, so `parseFloat("")` = NaN, and `NaN || 0` = 0 silently, causing the wave speed to be zero and the calculate() guard to block output with no visible error.
+
+**Fix:** Changed to `value="2200000000"` with `min="100000000"` and `step="100000000"`.
+
+**Lesson:** Never use scientific notation in HTML number-input value attributes. Use the full decimal integer.
+
+### 6. Chart Appeared Flat for PVC / Long Pipes (tMax Too Short)
+
+**Bug:** For PVC pipe (a ≈ 122 m/s, L=200m), `T_osc = 4L/a ≈ 6.6 s` but the chart window was fixed at 5 s. The entire window showed only the first half-cycle — a flat elevated line — which looked like "nothing happened".
+
+**Fix:** Dynamic chart window: `const tMax = Math.max(5.0, T_osc * 2.5)`. The chart always shows at least 2.5 full oscillation cycles regardless of wave speed.
+
+### 7. SVG Pipe Diagram — Dimension Label Showed Wrong Diameter (`d=25`)
+
+**Bug:** The dimension label used `Math.round(Math.sqrt(pipeW))` ≈ `Math.round(Math.sqrt(620))` ≈ 25 as a placeholder for the pipe diameter instead of the actual inner diameter. This was a copy-paste from a layout calculation that was accidentally left in the label string.
+
+**Fix:** Passed the actual `d_mm` value as a parameter to `renderPipeDiagram(a, L, d_mm, v0, ...)` and used it directly in the label: `d = ${d_mm} mm`.
+
+**Lesson:** When generating SVG labels programmatically, always derive display values from the physics parameters — never reuse layout geometry variables as data values.
+
+### 8. Velocity Label Overlapping Pipe Text
+
+**Bug:** The flow-velocity label `v₀ = X m/s →` was rendered above the pipe walls using `y="${pT - 5}"`, which placed it in the gap between the label banner and the pipe — competing with other text.
+
+**Fix:** Moved the velocity label into the label banner itself (`y="${yB + 14}"`), rendering it in white on the coloured background. This gives a clean two-piece label: the stage title on the left, the velocity on the right within the same banner.
+
+### 9. Chart Model Change — Square Wave to Sawtooth Spikes
+
+**Previous model:** A step-function (square wave) where pressure held at P0+ΔP for the full T_ret window, then stepped to P0-ΔP. Visually looked like a flat staircase — not what engineers see in real transient data.
+
+**New model:** Half-rectified cosine:
+```
+P(t) = P0 + ΔP · max(0, cos(2π·t/T_ret)) · exp(−ζ·floor(t/T_ret))
+```
+This produces sharp spikes at each wave return (t = 0, T_ret, 2·T_ret, …) that decay back to P0 between peaks, matching the characteristic sawtooth appearance of water hammer transient recordings.
+
+**Why this is more realistic:** Real pressure transducers at a closed valve record sharp positive spikes separated by periods near the static pressure. The square-wave model overstated the duration of the elevated pressure phase.
+
+**Limitation:** This is still a simplified model. Real damping is velocity- and frequency-dependent (Darcy-Weisbach), and real spikes have a finite rise-time set by the acoustic wave front thickness.
+
+### 10. Template-Based Input System
+
+**Previous design:** Free-form number inputs for all 8 physics parameters. Intimidating for new users; easy to enter physically inconsistent values (e.g., rho=1 kg/m³).
+
+**New design:** Six preset fluid-system cards (Utility Water, Crude Oil Pipeline, Process Coolant, Steam Condensate, PVC Water Line, Custom). Each card contains validated, realistic parameter sets from actual process plant scenarios. Closure time and design pressure remain always-editable. "Custom" reveals the full parameter form.
+
+**Engineering value:** Each template is self-consistent — density, bulk modulus, velocity, and operating pressure all reflect the same real fluid. This prevents physically nonsensical input combinations.
 ```javascript
 if (p.t >= p.d / 2) {
   alert('Wall thickness must be less than inner radius (d/2).');
