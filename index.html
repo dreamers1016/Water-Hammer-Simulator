@@ -725,51 +725,55 @@ function effectiveDeltaP(rho, a, v0, L, tc) {
  * Pressure time-series at the valve location.
  *
  * Instant closure (tc ≤ T_ret):
- *   Uses half-rectified cosine: spikes at t = n·T_ret with exponential decay.
- *   P(t) = P0 + ΔP · max(0, cos(2π·t/T_ret)) · exp(−ζ·n)
- *   where n = floor(t / T_ret)
- *   This produces sharp sawtooth spikes that drop back to P0 between peaks.
+ *   Full damped cosine — period = 2·T_ret = T_osc.
+ *   Peaks at t = 0, T_osc, 2·T_osc (compression at valve).
+ *   Troughs at t = T_ret, 3·T_ret (rarefaction at valve).
+ *   P(t) = P0 + ΔP · cos(π·t / T_ret) · exp(−α·t)
+ *   where α = ln(2) / (8·T_ret)  →  amplitude halves after 4 full oscillation periods.
  *
  * Gradual closure (tc > T_ret):
- *   During build-up (t ≤ tc): sinusoidal rise to peak.
- *   After closure (t > tc): smaller damped half-rectified cosine oscillations.
+ *   [0, tc]:   Sinusoidal S-curve rise: 0 → ΔP, zero slope at both ends (C1 smooth at tc).
+ *   [tc, end]: Damped cosine post-closure oscillations starting from peak.
+ *
+ * N is adaptive: minimum 80 samples per T_ret so the cosine is always smooth,
+ * capped at 2000 points to avoid chart lag.
  */
 function pressureTimeSeries(rho, a, v0, L, P0, tc, tMax) {
   const T_ret  = 2.0 * L / a;
   const dP     = effectiveDeltaP(rho, a, v0, L, tc);
   const dP_bar = dP / 1e5;
   const P0_bar = P0 / 1e5;
-  const dt     = tMax / N_POINTS;
+
+  // Adaptive sampling: ≥ 80 points per T_ret period ensures a smooth cosine
+  const N  = Math.min(2000, Math.max(600, Math.ceil(tMax / T_ret * 80)));
+  const dt = tMax / N;
+
+  // Continuous exponential damping: amplitude halves every 4 full oscillation periods
+  const alpha = Math.log(2) / (8.0 * T_ret);
 
   const times     = [];
   const pressures = [];
 
-  for (let i = 0; i <= N_POINTS; i++) {
+  for (let i = 0; i <= N; i++) {
     const t = i * dt;
-    times.push(parseFloat(t.toFixed(4)));
-
+    times.push(t);
     let P_bar;
 
     if (tc <= T_ret) {
-      // ── Near-instant / rapid closure ──
-      // Sawtooth spike: positive half of cosine, decaying each wave return
-      const halfIdx = Math.floor(t / T_ret);
-      const decay   = Math.exp(-ZETA * halfIdx);
-      const cosVal  = Math.cos(2.0 * Math.PI * t / T_ret);
-      P_bar = P0_bar + dP_bar * Math.max(0, cosVal) * decay;
+      // ── Rapid/instant closure: full damped cosine ──
+      // cos(π·t/T_ret) has period 2·T_ret = T_osc.
+      // Correctly shows both positive (compression) and negative (rarefaction) phases.
+      P_bar = P0_bar + dP_bar * Math.cos(Math.PI * t / T_ret) * Math.exp(-alpha * t);
+
     } else {
       // ── Gradual closure ──
       if (t <= tc) {
-        // Sinusoidal pressure build-up during valve travel
-        const frac = t / tc;
-        P_bar = P0_bar + dP_bar * Math.sin(0.5 * Math.PI * frac);
+        // Sinusoidal S-curve: slope = 0 at t=0 and at t=tc (avoids kink at junction)
+        P_bar = P0_bar + dP_bar * Math.sin(0.5 * Math.PI * t / tc);
       } else {
-        // Post-closure: smaller damped oscillations
-        const t2      = t - tc;
-        const halfIdx = Math.floor(t2 / T_ret);
-        const decay   = Math.exp(-ZETA * 1.5 * halfIdx);
-        const cosVal  = Math.cos(2.0 * Math.PI * t2 / T_ret);
-        P_bar = P0_bar + dP_bar * 0.40 * Math.max(0, cosVal) * decay;
+        // Post-closure: damped cosine starting from peak (C1 continuous at tc)
+        const t2 = t - tc;
+        P_bar = P0_bar + dP_bar * Math.cos(Math.PI * t2 / T_ret) * Math.exp(-alpha * 1.5 * t2);
       }
     }
 
@@ -1084,7 +1088,7 @@ function initChart() {
           borderColor: '#c0392b',
           borderWidth: 2.5,
           pointRadius: 0,
-          tension: 0,
+          tension: 0.25,
           fill: false,
           order: 2
         },
@@ -1095,7 +1099,7 @@ function initChart() {
           borderWidth: 2.2,
           borderDash: [8, 4],
           pointRadius: 0,
-          tension: 0,
+          tension: 0.25,
           fill: false,
           order: 1
         }
@@ -1146,145 +1150,239 @@ function initChart() {
 // PIPE DIAGRAM (SVG)
 // ═══════════════════════════════════════════════
 
-function renderPipeDiagram(a, L, d_mm, v0, T_ret, dP_bar, P0_bar) {
+/**
+ * Render 3-stage wave propagation diagram.
+ * All visual elements respond to current parameter values:
+ *   - Zone colour + intensity scales with danger level (ΔP vs Pdes)
+ *   - Green/amber/red palette + status badge changes with safety margin
+ *   - Wave front marker position, pressure callouts, regime label all dynamic
+ *   - Column-separation warning shown if trough pressure < 0 bar
+ */
+function renderPipeDiagram(a, L, d_mm, v0, T_ret, dP_bar, P0_bar, Pdes_bar, tc) {
   const svg = document.getElementById('pipe-svg');
+
+  const isGradual   = tc > T_ret;
+  const peakP_bar   = P0_bar + dP_bar;
+  const troughP_bar = P0_bar - dP_bar;
+  const T_osc       = 2.0 * T_ret;
+  const freq        = 1.0 / T_osc;
+
+  // ── Danger level → colour palette ──
+  const dangerRatio = Math.min(1.5, peakP_bar / Math.max(1, Pdes_bar));
+  let waveColor, statusLabel;
+  if      (dangerRatio < 0.625) { waveColor = '#1e8449'; statusLabel = '✓ SAFE'; }
+  else if (dangerRatio < 1.0)   { waveColor = '#d68910'; statusLabel = '⚠ WARNING'; }
+  else                          { waveColor = '#c0392b'; statusLabel = '✗ CRITICAL'; }
+  const zoneOpacity = Math.min(0.32, 0.09 + dangerRatio * 0.16);
+
+  // Regime label changes visually based on closure time vs T_ret
+  const regimeLabel = isGradual
+    ? `Gradual  tc=${tc.toFixed(2)}s > T_ret=${T_ret.toFixed(2)}s  →  Allievi ΔP`
+    : `Rapid  tc=${tc.toFixed(2)}s ≤ T_ret=${T_ret.toFixed(2)}s  →  Full Joukowski ΔP`;
+
   document.getElementById('pipe-param-label').textContent =
     `a = ${Math.round(a)} m/s  ·  L = ${L} m  ·  T_ret = ${T_ret.toFixed(3)} s`;
 
-  const W      = 760;
-  const stageH = 92;
-  const gap    = 10;
-  const totalH = stageH * 3 + gap * 2;
-  svg.setAttribute('viewBox', `0 0 ${W} ${totalH}`);
+  // ── SVG layout ──
+  const W       = 760;
+  const stageH  = 98;
+  const gap     = 10;
+  svg.setAttribute('viewBox', `0 0 ${W} ${stageH * 3 + gap * 2}`);
 
-  const pipeX    = 38;
-  const pipeW    = 620;
+  const pipeX    = 40;
+  const pipeW    = 580;
   const valveX   = pipeX + pipeW + 4;
   const LABEL_H  = 22;
-  const PIPE_OFF = 26;   // pipe top wall starts 26px below yBase (22px label + 4px gap)
+  const PIPE_OFF = 28;
   const WALL_H   = 8;
-  const FLUID_H  = 16;
-  const FLUID_OFF = PIPE_OFF + WALL_H;         // 34
-  const PIPE_BOT  = FLUID_OFF + FLUID_H;       // 50
-  const NOTE_Y    = FLUID_OFF + FLUID_H / 2 + 4; // 52 — vertically centred in fluid zone
-  const DIM_Y     = stageH - 14;
+  const FLUID_H  = 18;
+  const FLUID_OFF = PIPE_OFF + WALL_H;
+  const NOTE_Y    = PIPE_OFF + WALL_H + FLUID_H + WALL_H + 16;
+  const DIM_Y     = stageH - 6;
 
-  const stages = [
-    {
-      label: `t = 0  —  Valve Closes  (ΔP = +${dP_bar.toFixed(1)} bar)`,
-      labelFill: '#c0392b',
-      fluidFill: '#c0392b', fluidOpacity: 0.18,
-      fluidX: valveX - 90, fluidW: 90,
-      flowArrows: true,
-      waveArrow: null,
-      note: `Compression wave generated at valve  →  travelling upstream at a = ${Math.round(a)} m/s`,
-      noteColor: '#922b21',
-    },
-    {
-      label: `t = L/a = ${(L/a).toFixed(3)} s  —  Wave Reaches Reservoir, Rarefaction Reflected`,
-      labelFill: '#d68910',
-      fluidFill: '#c0392b', fluidOpacity: 0.13,
-      fluidX: pipeX, fluidW: pipeW,
-      flowArrows: false,
-      waveArrow: 'right',
-      note: `Entire pipe at elevated pressure (+${dP_bar.toFixed(1)} bar)  |  rarefaction wave now travels downstream →`,
-      noteColor: '#7d6608',
-    },
-    {
-      label: `t = 2L/a = ${(2*L/a).toFixed(3)} s  —  Rarefaction at Valve, Cycle Repeats  (T = ${(4*L/a).toFixed(3)} s)`,
-      labelFill: '#1a5276',
-      fluidFill: '#1a5276', fluidOpacity: 0.08,
-      fluidX: pipeX, fluidW: pipeW * 0.6,
-      flowArrows: false,
-      waveArrow: null,
-      note: `Pressure at valve drops to P₀ − ΔP  |  oscillation frequency f = ${(a/(4*L)).toFixed(3)} Hz`,
-      noteColor: '#154360',
-    }
-  ];
-
-  let svg_html = `<defs>
-    <marker id="arRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-      <polygon points="0 0,8 3,0 6" fill="#c0392b"/>
-    </marker>
-    <marker id="arAmb" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-      <polygon points="0 0,8 3,0 6" fill="#d68910"/>
-    </marker>
-    <marker id="arBlu" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-      <polygon points="0 0,8 3,0 6" fill="#1a5276"/>
-    </marker>
+  let html = `<defs>
+    <marker id="arBlu" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0,7 2.5,0 5" fill="#1a5276"/></marker>
+    <marker id="arAmb" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0,7 2.5,0 5" fill="#d68910"/></marker>
+    <marker id="arLeft" markerWidth="7" markerHeight="5" refX="1" refY="2.5" orient="auto">
+      <polygon points="7 0,0 2.5,7 5" fill="${waveColor}"/></marker>
   </defs>`;
 
-  stages.forEach((s, idx) => {
-    const yB = idx * (stageH + gap);
+  // Helper: draw pipe shell + reservoir for each stage
+  function pipShell(yB) {
     const pT = yB + PIPE_OFF;
     const fT = yB + FLUID_OFF;
-    const nY = yB + NOTE_Y;
-    const dY = yB + DIM_Y;
-
-    // Label banner
-    svg_html += `<rect x="0" y="${yB}" width="${W}" height="${LABEL_H}" rx="4" fill="${s.labelFill}"/>`;
-    svg_html += `<text x="10" y="${yB + 15}" font-size="10.5" fill="#fff" font-weight="700"
-      dominant-baseline="auto">${s.label}</text>`;
-
-    // Reservoir block
     const resX = 6, resW = pipeX - resX - 2;
-    svg_html += `<rect x="${resX}" y="${pT}" width="${resW}" height="${WALL_H + FLUID_H + WALL_H}" rx="3"
+    // Reservoir
+    html += `<rect x="${resX}" y="${pT}" width="${resW}" height="${WALL_H+FLUID_H+WALL_H}" rx="3"
       fill="#1a5276" opacity="0.14" stroke="#1a5276" stroke-width="1.2"/>`;
-    svg_html += `<text x="${resX + resW/2}" y="${pT + WALL_H + FLUID_H/2 + 4}" font-size="7.5"
+    html += `<text x="${resX+resW/2}" y="${pT+WALL_H+FLUID_H/2+4}" font-size="7"
       fill="#1a5276" font-weight="700" text-anchor="middle">RES.</text>`;
+    // Top wall
+    html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
+    html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="3" rx="1" fill="rgba(255,255,255,0.5)"/>`;
+    // Bottom wall
+    html += `<rect x="${pipeX}" y="${fT+FLUID_H}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
+    // Fluid background
+    html += `<rect x="${pipeX}" y="${fT}" width="${pipeW}" height="${FLUID_H}" fill="#dde6ef" opacity="0.35"/>`;
+  }
 
-    // Pipe walls
-    svg_html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
-    svg_html += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="3" rx="1" fill="rgba(255,255,255,0.5)"/>`;
-    svg_html += `<rect x="${pipeX}" y="${PIPE_BOT + yB}" width="${pipeW}" height="${WALL_H}" rx="2" fill="#c5c3bc"/>`;
-
-    // Fluid zone
-    svg_html += `<rect x="${pipeX}" y="${fT}" width="${pipeW}" height="${FLUID_H}" fill="#e8e6df" opacity="0.6"/>`;
-    svg_html += `<rect x="${s.fluidX}" y="${fT}" width="${s.fluidW}" height="${FLUID_H}"
-      fill="${s.fluidFill}" opacity="${s.fluidOpacity}"/>`;
-
-    // Note text
-    svg_html += `<text x="${pipeX + pipeW/2}" y="${nY}" font-size="8.5"
-      fill="${s.noteColor}" font-weight="600" text-anchor="middle">${s.note}</text>`;
-
-    // Flow arrows (stage 0 only) — placed BELOW the upper pipe wall, inside fluid zone
-    if (s.flowArrows) {
-      const midY = fT + FLUID_H / 2;
-      [160, 300, 430].forEach(ax => {
-        svg_html += `<line x1="${ax}" y1="${midY}" x2="${ax+28}" y2="${midY}"
-          stroke="#1a5276" stroke-width="2" opacity="0.45" marker-end="url(#arBlu)"/>`;
-      });
-      // Velocity label — above pipe, in label area
-      svg_html += `<text x="${pipeX + pipeW * 0.45}" y="${yB + 14}" font-size="8.5"
-        fill="#fff" font-weight="700" text-anchor="middle" opacity="0.85">v₀ = ${v0} m/s →</text>`;
-    }
-
-    // Reflected wave arrow (stage 1 only)
-    if (s.waveArrow === 'right') {
-      const midY = fT + FLUID_H / 2;
-      const arrowLen = 150;
-      svg_html += `<line x1="${pipeX + 15}" y1="${midY}" x2="${pipeX + 15 + arrowLen}" y2="${midY}"
-        stroke="#d68910" stroke-width="2" marker-end="url(#arAmb)"/>`;
-    }
-
-    // Valve
+  // Helper: valve block
+  function valve(yB, color) {
+    const pT = yB + PIPE_OFF;
+    const fT = yB + FLUID_OFF;
     const vH = WALL_H * 2 + FLUID_H + 6;
-    svg_html += `<rect x="${valveX}" y="${pT - 3}" width="14" height="${vH}" rx="3"
-      fill="#c0392b" opacity="0.9"/>`;
-    svg_html += `<line x1="${valveX+7}" y1="${pT - 3}" x2="${valveX+7}" y2="${pT - 3 + vH}"
-      stroke="#fff" stroke-width="1.5"/>`;
-    svg_html += `<text x="${valveX + 19}" y="${fT + 5}" font-size="7.5" fill="#c0392b" font-weight="700">VALVE</text>`;
-    svg_html += `<text x="${valveX + 19}" y="${fT + 14}" font-size="7" fill="#c0392b">CLOSED</text>`;
+    html += `<rect x="${valveX}" y="${pT-3}" width="13" height="${vH}" rx="3" fill="${color}" opacity="0.88"/>`;
+    html += `<line x1="${valveX+6.5}" y1="${pT-3}" x2="${valveX+6.5}" y2="${pT-3+vH}" stroke="#fff" stroke-width="1.5"/>`;
+    html += `<text x="${valveX+17}" y="${fT+9}" font-size="6.5" fill="#999">VALVE</text>`;
+    html += `<text x="${valveX+17}" y="${fT+17}" font-size="6" fill="#bbb">CLOSED</text>`;
+  }
 
-    // Dimension line — L dimension
-    svg_html += `<line x1="${pipeX}" y1="${dY}" x2="${valveX}" y2="${dY}" stroke="#c0bfb6" stroke-width="0.8"/>`;
-    svg_html += `<line x1="${pipeX}" y1="${dY-3}" x2="${pipeX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.8"/>`;
-    svg_html += `<line x1="${valveX}" y1="${dY-3}" x2="${valveX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.8"/>`;
-    svg_html += `<text x="${pipeX + pipeW/2}" y="${dY + 11}" font-size="8" fill="#b0afa8"
+  // Helper: pressure label above valve
+  function pressureLabel(yB, pBar, color, note) {
+    const pT = yB + PIPE_OFF;
+    const boxW = note ? 118 : 72;
+    html += `<rect x="${valveX+17}" y="${pT}" width="${boxW}" height="14" rx="3"
+      fill="${color}" opacity="0.13" stroke="${color}" stroke-width="0.8"/>`;
+    html += `<text x="${valveX+17+boxW/2}" y="${pT+10}" font-size="7.5" fill="${color}"
+      font-weight="800" text-anchor="middle">P = ${pBar.toFixed(1)} bar${note ? '  ' + note : ''}</text>`;
+  }
+
+  // Helper: dimension line
+  function dimLine(yB) {
+    const dY = yB + DIM_Y;
+    html += `<line x1="${pipeX}" y1="${dY}" x2="${valveX}" y2="${dY}" stroke="#c0bfb6" stroke-width="0.7"/>`;
+    html += `<line x1="${pipeX}" y1="${dY-3}" x2="${pipeX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.7"/>`;
+    html += `<line x1="${valveX}" y1="${dY-3}" x2="${valveX}" y2="${dY+3}" stroke="#c0bfb6" stroke-width="0.7"/>`;
+    html += `<text x="${pipeX+pipeW/2}" y="${dY+9}" font-size="7.5" fill="#b0afa8"
       font-weight="600" text-anchor="middle">L = ${L} m  |  d = ${d_mm} mm  |  a = ${Math.round(a)} m/s</text>`;
-  });
+  }
 
-  svg.innerHTML = svg_html;
+  // ── STAGE 0: t ≈ 0 — Valve closes, wave just born at valve ──────────────
+  {
+    const yB = 0;
+    const pT = yB + PIPE_OFF;
+    const fT = yB + FLUID_OFF;
+    // Wave front shown 22% into pipe from valve (to make marker visible)
+    const wfX  = valveX - pipeW * 0.22;
+    const midY = fT + FLUID_H / 2;
+
+    // Label banner with status badge
+    html += `<rect x="0" y="${yB}" width="${W}" height="${LABEL_H}" rx="4" fill="${waveColor}"/>`;
+    html += `<text x="10" y="${yB+15}" font-size="9.5" fill="#fff" font-weight="700">
+      t ≈ 0  —  Valve Closes   ΔP = +${dP_bar.toFixed(1)} bar   [${regimeLabel}]
+    </text>`;
+    html += `<rect x="${W-82}" y="${yB+4}" width="76" height="14" rx="3" fill="rgba(255,255,255,0.18)"/>`;
+    html += `<text x="${W-44}" y="${yB+14}" font-size="9" fill="#fff" font-weight="800"
+      text-anchor="middle">${statusLabel}</text>`;
+
+    pipShell(yB);
+
+    // Normal zone (ahead of wave — left side): faint blue-grey
+    html += `<rect x="${pipeX}" y="${fT}" width="${wfX-pipeX}" height="${FLUID_H}"
+      fill="#1a5276" opacity="0.06"/>`;
+    // Compressed zone (valve side): danger colour
+    html += `<rect x="${wfX}" y="${fT}" width="${valveX-wfX}" height="${FLUID_H}"
+      fill="${waveColor}" opacity="${zoneOpacity}"/>`;
+    // Wave front bar
+    html += `<rect x="${wfX-2.5}" y="${pT}" width="5" height="${WALL_H+FLUID_H+WALL_H}"
+      fill="${waveColor}" opacity="0.85" rx="1.5"/>`;
+    // Wave direction arrow (← upstream)
+    html += `<line x1="${wfX-10}" y1="${midY}" x2="${wfX-36}" y2="${midY}"
+      stroke="${waveColor}" stroke-width="2" marker-end="url(#arLeft)"/>`;
+
+    // Flow arrows in normal zone
+    const arW = wfX - pipeX - 30;
+    [0.18, 0.44, 0.70].forEach(p => {
+      const ax = pipeX + arW * p + 10;
+      html += `<line x1="${ax}" y1="${midY}" x2="${ax+20}" y2="${midY}"
+        stroke="#1a5276" stroke-width="1.5" opacity="0.35" marker-end="url(#arBlu)"/>`;
+    });
+    // v0 label in banner
+    html += `<text x="${pipeX+(wfX-pipeX)*0.45}" y="${yB+15}" font-size="8"
+      fill="#fff" font-weight="700" text-anchor="middle" opacity="0.72">v₀ = ${v0} m/s →</text>`;
+
+    valve(yB, waveColor);
+    pressureLabel(yB, peakP_bar, waveColor, null);
+
+    // Note
+    html += `<text x="${pipeX+pipeW/2}" y="${yB+NOTE_Y}" font-size="8" fill="${waveColor}"
+      font-weight="600" text-anchor="middle">
+      Compression wave travels upstream at a = ${Math.round(a)} m/s  ·  Reaches reservoir in L/a = ${(L/a).toFixed(3)} s
+    </text>`;
+    dimLine(yB);
+  }
+
+  // ── STAGE 1: t = L/a — Wave at reservoir, full pipe compressed ────────────
+  {
+    const yB  = stageH + gap;
+    const pT  = yB + PIPE_OFF;
+    const fT  = yB + FLUID_OFF;
+    const midY = fT + FLUID_H / 2;
+
+    html += `<rect x="0" y="${yB}" width="${W}" height="${LABEL_H}" rx="4" fill="#d68910"/>`;
+    html += `<text x="10" y="${yB+15}" font-size="9.5" fill="#fff" font-weight="700">
+      t = L/a = ${(L/a).toFixed(3)} s  —  Wave at Reservoir  →  Entire Pipe at ${peakP_bar.toFixed(1)} bar  →  Rarefaction Begins
+    </text>`;
+
+    pipShell(yB);
+
+    // Full pipe compressed (danger colour)
+    html += `<rect x="${pipeX}" y="${fT}" width="${pipeW}" height="${FLUID_H}"
+      fill="${waveColor}" opacity="${zoneOpacity}"/>`;
+    // Rarefaction origin — small blue patch at reservoir showing it's just starting
+    html += `<rect x="${pipeX}" y="${fT}" width="24" height="${FLUID_H}" fill="#1a5276" opacity="0.22"/>`;
+    // Rarefaction arrow → (downstream)
+    html += `<line x1="${pipeX+28}" y1="${midY}" x2="${pipeX+120}" y2="${midY}"
+      stroke="#d68910" stroke-width="1.8" marker-end="url(#arAmb)"/>`;
+    html += `<text x="${pipeX+74}" y="${midY-5}" font-size="7" fill="#7d6608"
+      font-weight="700" text-anchor="middle">rarefaction →</text>`;
+
+    valve(yB, waveColor);
+    pressureLabel(yB, peakP_bar, waveColor, null);
+
+    html += `<text x="${pipeX+pipeW/2}" y="${yB+NOTE_Y}" font-size="8" fill="#7d6608"
+      font-weight="600" text-anchor="middle">
+      All fluid stopped (v = 0)  ·  Entire pipe at peak pressure ${peakP_bar.toFixed(1)} bar  ·  Rarefaction returns in L/a = ${(L/a).toFixed(3)} s
+    </text>`;
+    dimLine(yB);
+  }
+
+  // ── STAGE 2: t = 2L/a — Rarefaction back at valve, trough pressure ───────
+  {
+    const yB  = 2 * (stageH + gap);
+    const pT  = yB + PIPE_OFF;
+    const fT  = yB + FLUID_OFF;
+    const colSep = troughP_bar < 0;
+
+    html += `<rect x="0" y="${yB}" width="${W}" height="${LABEL_H}" rx="4" fill="#1a5276"/>`;
+    html += `<text x="10" y="${yB+15}" font-size="9.5" fill="#fff" font-weight="700">
+      t = 2L/a = ${(2*L/a).toFixed(3)} s  —  Rarefaction at Valve   T_osc = ${T_osc.toFixed(3)} s   f = ${freq.toFixed(3)} Hz   Cycle Repeats →
+    </text>`;
+
+    pipShell(yB);
+
+    // Rarefaction (blue) throughout pipe
+    html += `<rect x="${pipeX}" y="${fT}" width="${pipeW}" height="${FLUID_H}"
+      fill="#1a5276" opacity="0.13"/>`;
+    // Next compression seed at reservoir (shows cycle restarting)
+    html += `<rect x="${pipeX}" y="${fT}" width="20" height="${FLUID_H}"
+      fill="${waveColor}" opacity="${zoneOpacity * 0.6}"/>`;
+
+    valve(yB, '#1a5276');
+    const cpColor = colSep ? '#c0392b' : '#1a5276';
+    pressureLabel(yB, troughP_bar, cpColor, colSep ? '⚠ col.sep.' : null);
+
+    const noteText = colSep
+      ? `P₀ − ΔP = ${troughP_bar.toFixed(1)} bar  ⚠ Below zero — vapour pocket risk (column separation not modelled)`
+      : `P₀ − ΔP = ${troughP_bar.toFixed(1)} bar at valve  ·  Oscillation continues  ·  Next compression from reservoir →`;
+    html += `<text x="${pipeX+pipeW/2}" y="${yB+NOTE_Y}" font-size="8"
+      fill="${colSep ? '#c0392b' : '#154360'}" font-weight="600" text-anchor="middle">${noteText}</text>`;
+    dimLine(yB);
+  }
+
+  svg.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════
@@ -1388,7 +1486,7 @@ function calculate() {
   chart.update('active');
 
   updateMetrics(a, p.L, p.tc, P0_bar, Pdes_bar, currPeak.peakP, currPeak.peakT);
-  renderPipeDiagram(a, p.L, p.d_mm, p.v0, T_ret, dP_bar, P0_bar);
+  renderPipeDiagram(a, p.L, p.d_mm, p.v0, T_ret, dP_bar, P0_bar, Pdes_bar, p.tc);
 }
 
 // ═══════════════════════════════════════════════
