@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Hammer Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0eeea;
+  --border: #dddbd4;
+  --ink: #1c1c2a;
+  --ink-muted: #6b6a76;
+  --ink-faint: #a09fa8;
+  --accent: #c0392b;
+  --blue: #1a5276;
+  --safe: #1e8449;
+  --safe-bg: #eafaf1;
+  --warn: #d68910;
+  --warn-bg: #fef9e7;
+  --crit: #c0392b;
+  --crit-bg: #fdf2f0;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--ink);
+  color: #fff;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.header-icon svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; }
+h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.header-sub { font-size: 11px; color: #9b9aab; margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.header-badge {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #c5c4ce;
+  padding: 4px 10px; border-radius: 20px;
+  text-transform: uppercase;
+}
+.calc-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.02em;
+}
+.calc-btn:hover { background: #a93226; }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 18px;
+  padding: 20px 24px;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* ── PANEL BASE ── */
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-title {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-muted);
+}
+.panel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.panel-dot.blue { background: var(--blue); }
+.ph-sep { flex: 1; }
+.panel-body { padding: 16px; }
+
+/* ── INPUT PANEL ── */
+.input-panel { grid-row: 1 / 4; align-self: start; }
+
+.section-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--ink-faint);
+  margin-bottom: 10px; margin-top: 18px;
+}
+.section-label:first-child { margin-top: 0; }
+
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: 5px;
+}
+.input-wrap { position: relative; }
+.input-wrap input[type=text], .input-wrap input[type=number] {
+  width: 100%;
+  padding: 8px 48px 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 14px; font-weight: 500;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+.input-wrap input::-webkit-outer-spin-button,
+.input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.input-wrap input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,82,118,0.08); }
+.input-wrap input.invalid { border-color: var(--accent); }
+.input-unit {
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px; font-weight: 600;
+  color: var(--ink-faint); pointer-events: none;
+}
+
+/* Material toggle */
+.material-toggle {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border: 1.5px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+  margin-bottom: 12px;
+}
+.mat-btn {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  background: var(--surface2);
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+.mat-btn:last-child { border-right: none; }
+.mat-btn.active { background: var(--ink); color: #fff; }
+.mat-btn:not(.active):hover { background: var(--border); }
+.mat-sub { font-size: 10px; font-weight: 400; opacity: 0.65; display: block; margin-top: 1px; }
+
+/* Slider */
+.slider-field { margin-bottom: 12px; }
+.slider-label-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12px; font-weight: 600; color: var(--ink-muted);
+  margin-bottom: 7px;
+}
+.slider-val { font-size: 14px; font-weight: 800; color: var(--accent); }
+input[type=range] {
+  width: 100%; height: 4px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--border);
+  border-radius: 4px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+  transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.slider-end-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--ink-faint); margin-top: 4px;
+}
+.critical-time-note {
+  font-size: 10px; color: var(--blue); font-weight: 600;
+  margin-top: 5px; display: none;
+}
+.critical-time-note.show { display: block; }
+
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* Wave speed readout */
+.wave-readout {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wave-label { font-size: 11px; color: var(--ink-muted); font-weight: 600; }
+.wave-unit-label { font-size: 10px; color: var(--ink-faint); margin-top: 1px; }
+.wave-value { font-size: 22px; font-weight: 800; color: var(--blue); letter-spacing: -1px; }
+.wave-value-unit { font-size: 11px; color: var(--ink-faint); }
+
+/* ── CHART PANEL ── */
+.chart-panel {}
+.chart-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+.legend-line { width: 22px; height: 3px; border-radius: 2px; }
+.legend-dash {
+  width: 22px; height: 3px;
+  background: repeating-linear-gradient(90deg, var(--blue) 0, var(--blue) 5px, transparent 5px, transparent 9px);
+}
+.toolbar-sep { flex: 1; }
+.chart-wrap { padding: 14px 16px 10px; position: relative; }
+.chart-wrap canvas { max-height: 320px; }
+
+/* ── PIPE DIAGRAM PANEL ── */
+.pipe-panel svg { width: 100%; display: block; }
+
+/* ── METRICS ROW ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 15px 16px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.metric-card.safe::before { background: var(--safe); }
+.metric-card.warn::before { background: var(--warn); }
+.metric-card.crit::before { background: var(--crit); }
+.metric-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-faint); margin-bottom: 8px;
+}
+.metric-value {
+  font-size: 30px; font-weight: 800;
+  letter-spacing: -1.5px; line-height: 1;
+  color: var(--ink);
+}
+.metric-unit { font-size: 12px; font-weight: 600; color: var(--ink-faint); margin-left: 2px; }
+.metric-sub { font-size: 10px; color: var(--ink-faint); margin-top: 5px; }
+.metric-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 20px; margin-top: 7px;
+}
+.badge-safe { background: var(--safe-bg); color: var(--safe); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-crit { background: var(--crit-bg); color: var(--crit); }
+
+/* ── EXPLANATION PANEL ── */
+.explanation {
+  grid-column: 1 / 3;
+  background: var(--ink);
+  color: rgba(255,255,255,0.85);
+  border-radius: var(--radius);
+  padding: 26px 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 28px;
+  box-shadow: var(--shadow);
+}
+.exp-col-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--accent); margin-bottom: 8px;
+}
+.exp-col h3 {
+  font-size: 14px; font-weight: 700;
+  color: #fff; margin-bottom: 7px; line-height: 1.3;
+}
+.exp-col p { font-size: 12px; line-height: 1.65; color: rgba(255,255,255,0.58); }
+.exp-formula {
+  margin-top: 10px;
+  background: rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 5px 5px 0;
+  padding: 9px 13px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.6;
+}
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-faint);
+  padding: 10px 24px 20px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .input-panel { grid-row: auto; }
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .explanation { grid-template-columns: 1fr; grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"/>
+        <circle cx="8" cy="12" r="2.5" fill="rgba(255,255,255,0.3)" stroke="#fff"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Water Hammer Simulator</h1>
+      <div class="header-sub">Pressure Transient Analysis in Pipe Systems</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="header-badge">Chemical Engineering Tool</span>
+    <button class="calc-btn" onclick="calculate()">Calculate</button>
+  </div>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- INPUT PANEL -->
+  <div class="panel input-panel">
+    <div class="panel-header">
+      <div class="panel-dot"></div>
+      <span class="panel-title">System Parameters</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="section-label">Pipe Geometry</div>
+
+      <div class="field">
+        <label>Pipe Length</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-L" value="500" min="1" step="1">
+          <span class="input-unit">m</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Inner Diameter</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-d" value="150" min="1" step="1">
+          <span class="input-unit">mm</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Wall Thickness</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-t" value="8" min="0.1" step="0.1">
+          <span class="input-unit">mm</span>
+        </div>
+      </div>
+
+      <div class="section-label">Pipe Material</div>
+      <div class="material-toggle" id="material-toggle">
+        <div class="mat-btn active" data-mat="steel">Steel<span class="mat-sub">E = 200 GPa</span></div>
+        <div class="mat-btn" data-mat="pvc">PVC<span class="mat-sub">E = 2.8 GPa</span></div>
+        <div class="mat-btn" data-mat="copper">Copper<span class="mat-sub">E = 110 GPa</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-label">Fluid Properties</div>
+
+      <div class="field">
+        <label>Flow Velocity (pre-closure)</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-v0" value="2.5" min="0.01" step="0.1">
+          <span class="input-unit">m/s</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Bulk Modulus</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-K" value="2.2e9" min="1e8" step="1e8">
+          <span class="input-unit">Pa</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Fluid Density</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-rho" value="998" min="100" step="1">
+          <span class="input-unit">kg/m³</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Static Operating Pressure</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-P0" value="2" min="0" step="0.5">
+          <span class="input-unit">bar</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-label">Valve Closure</div>
+
+      <div class="slider-field">
+        <div class="slider-label-row">
+          <span>Closure Time</span>
+          <span class="slider-val" id="slider-display">0.01 s</span>
+        </div>
+        <input type="range" id="slider-tc" min="0" max="100" value="0" step="1">
+        <div class="slider-end-labels">
+          <span>Instant (0.01 s)</span>
+          <span>Gradual (5 s)</span>
+        </div>
+        <div class="critical-time-note" id="critical-note">
+          Critical time = <span id="critical-val">—</span> s
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Design Pressure Limit</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-Pdes" value="40" min="1" step="1">
+          <span class="input-unit">bar</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="wave-readout">
+        <div>
+          <div class="wave-label">Wave Speed (Korteweg)</div>
+          <div class="wave-unit-label">a = √[K / (ρ·(1 + K·d/(E·t))]</div>
+        </div>
+        <div style="text-align:right">
+          <div class="wave-value" id="wave-speed-display">—</div>
+          <div class="wave-value-unit">m/s</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CHART PANEL -->
+  <div class="panel chart-panel">
+    <div class="chart-toolbar">
+      <div class="legend-item">
+        <div class="legend-line" style="background:var(--accent)"></div>
+        Instant Closure (0.01 s)
+      </div>
+      <div class="legend-item" style="margin-left:6px">
+        <div class="legend-dash"></div>
+        <span id="legend-grad-label">Current Closure</span>
+      </div>
+      <div class="toolbar-sep"></div>
+      <span style="font-size:11px;color:var(--ink-faint);font-weight:600;" id="chart-subtitle">Pressure at valve location</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="pressureChart"></canvas>
+    </div>
+  </div>
+
+  <!-- PIPE DIAGRAM PANEL -->
+  <div class="panel pipe-panel">
+    <div class="panel-header">
+      <div class="panel-dot blue"></div>
+      <span class="panel-title">Wave Propagation — Time Steps</span>
+      <div class="ph-sep"></div>
+      <span style="font-size:11px;color:var(--ink-faint);font-weight:600;" id="pipe-param-label">—</span>
+    </div>
+    <div style="padding:16px 18px 12px">
+      <svg id="pipe-svg" viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg"
+           font-family="'Segoe UI',system-ui,sans-serif">
+      </svg>
+    </div>
+  </div>
+
+  <!-- METRICS ROW -->
+  <div class="metrics-row">
+    <div class="metric-card" id="card-peak">
+      <div class="metric-label">Peak Pressure</div>
+      <div><span class="metric-value" id="met-peak">—</span><span class="metric-unit">bar</span></div>
+      <div class="metric-sub" id="met-peak-sub">—</div>
+      <span class="metric-badge" id="badge-peak">—</span>
+    </div>
+    <div class="metric-card" id="card-time">
+      <div class="metric-label">Time to Peak</div>
+      <div><span class="metric-value" id="met-tpeak">—</span><span class="metric-unit" id="met-tpeak-unit">s</span></div>
+      <div class="metric-sub" id="met-tpeak-sub">—</div>
+      <span class="metric-badge badge-warn" id="badge-time">—</span>
+    </div>
+    <div class="metric-card" id="card-freq">
+      <div class="metric-label">Oscillation Period</div>
+      <div><span class="metric-value" id="met-freq">—</span><span class="metric-unit">s</span></div>
+      <div class="metric-sub" id="met-freq-sub">T = 4L / a</div>
+      <span class="metric-badge badge-warn">Period</span>
+    </div>
+    <div class="metric-card" id="card-margin">
+      <div class="metric-label">Safety Margin</div>
+      <div><span class="metric-value" id="met-margin">—</span><span class="metric-unit">%</span></div>
+      <div class="metric-sub" id="met-margin-sub">vs design pressure limit</div>
+      <span class="metric-badge" id="badge-margin">—</span>
+    </div>
+  </div>
+
+  <!-- EXPLANATION PANEL -->
+  <div class="explanation">
+    <div class="exp-col">
+      <div class="exp-col-title">What Is Water Hammer?</div>
+      <h3>Sudden momentum change in confined fluids</h3>
+      <p>When a valve closes rapidly, the flowing fluid decelerates abruptly. Kinetic energy converts to a pressure surge travelling upstream as an acoustic wave — the audible "hammer" in plumbing systems. The wave reflects back and forth between the valve and the supply reservoir, oscillating until friction dissipates the energy.</p>
+      <div class="exp-formula">ΔP = ρ · a · Δv<br><span style="opacity:0.6;font-size:10px">(Joukowski equation, 1898)</span></div>
+    </div>
+    <div class="exp-col">
+      <div class="exp-col-title">Wave Speed Formula (Korteweg, 1878)</div>
+      <h3>Acoustic velocity — fluid compressibility + pipe elasticity</h3>
+      <p>Wave speed is set by how compressible the fluid is and how much the pipe wall can flex. Rigid steel barely deforms, so the wave travels near the acoustic speed of water (~1484 m/s). Flexible PVC absorbs deformation, slowing the wave dramatically and reducing peak pressure — but at the cost of pipe flexibility fatigue.</p>
+      <div class="exp-formula">a = √[ K/ρ / (1 + K·d / (E·t)) ]<br><span style="opacity:0.6;font-size:10px">K=bulk mod, E=Young's mod, d=diameter, t=wall thickness</span></div>
+    </div>
+    <div class="exp-col">
+      <div class="exp-col-title">Chemical Engineering Applications</div>
+      <h3>Where pressure transients matter in process plants</h3>
+      <p>Water hammer occurs in: <strong style="color:#fff">cooling water networks</strong> (pump trip/ESD events), <strong style="color:#fff">steam condensate lines</strong> (steam collapse + liquid slug), <strong style="color:#fff">chemical dosing systems</strong> (check-valve slam), and <strong style="color:#fff">crude oil pipelines</strong> (fast block-valve actuation). Uncontrolled surges cause pipe rupture, flange leaks, valve seat damage, and instrument impulse-line failures.</p>
+      <div class="exp-formula">T_critical = 2L / a<br><span style="opacity:0.6;font-size:10px">Closure faster than T_critical → full Joukowski ΔP</span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Water Hammer Simulator &nbsp;·&nbsp; Physics: Korteweg (1878) &amp; Joukowski (1898) &nbsp;·&nbsp;
+  Calculations validated against Streeter &amp; Wylie, "Fluid Transients"
+</footer>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const MATERIALS = {
+  steel:  { E: 200e9,  label: 'Steel' },
+  pvc:    { E: 2.8e9,  label: 'PVC' },
+  copper: { E: 110e9,  label: 'Copper' }
+};
+
+const N_POINTS = 600;
+const T_MAX    = 5.0;      // seconds shown on chart
+const ZETA     = 0.10;     // friction damping per wave return (dimensionless)
+
+let currentMaterial = 'steel';
+let chart = null;
+
+// ═══════════════════════════════════════════════
+// PHYSICS ENGINE
+// ═══════════════════════════════════════════════
+
+/**
+ * Korteweg (1878) wave speed formula for elastic pipe.
+ * @param {number} K   - Bulk modulus of fluid [Pa]
+ * @param {number} rho - Fluid density [kg/m³]
+ * @param {number} d   - Inner diameter [m]
+ * @param {number} E   - Young's modulus of pipe material [Pa]
+ * @param {number} t   - Wall thickness [m]
+ * @returns {number} Wave speed a [m/s]
+ */
+function waveSpeed(K, rho, d, E, t) {
+  const denominator = 1.0 + (K * d) / (E * t);
+  return Math.sqrt(K / (rho * denominator));
+}
+
+/**
+ * Joukowski (1898) instantaneous pressure rise.
+ * Valid when valve closure time tc <= critical time T_crit = 2L/a.
+ */
+function joukowskiDeltaP(rho, a, v0) {
+  return rho * a * v0;
+}
+
+/**
+ * Effective pressure rise accounting for gradual closure.
+ * For tc > T_crit (= 2L/a), Allievi reduction applies.
+ */
+function effectiveDeltaP(rho, a, v0, L, tc) {
+  const T_crit = 2.0 * L / a;
+  const dP_joukowski = joukowskiDeltaP(rho, a, v0);
+  if (tc <= T_crit) {
+    return dP_joukowski;  // Full water hammer
+  } else {
+    // Allievi (1902) approximate reduction for slow closure
+    return dP_joukowski * (T_crit / tc);
+  }
+}
+
+/**
+ * Generate pressure time-series at the valve location.
+ *
+ * Physics basis:
+ * - Instant closure produces a square wave at the valve:
+ *     Phase 1 [0, 2L/a):     P = P0 + ΔP   (compression wave travelling upstream)
+ *     Phase 2 [2L/a, 4L/a):  P = P0 - ΔP   (rarefaction returns after reservoir reflection)
+ *     Period = 4L/a; friction causes exponential amplitude decay each half-cycle.
+ *
+ * - Gradual closure (tc >= 2L/a) produces a smooth pressure build-up
+ *   followed by smaller damped oscillations post-closure.
+ *
+ * Reference: Streeter & Wylie, "Fluid Transients", 1978, Chapters 2–3.
+ *
+ * @param {number} rho  - Fluid density [kg/m³]
+ * @param {number} a    - Wave speed [m/s]
+ * @param {number} v0   - Initial flow velocity [m/s]
+ * @param {number} L    - Pipe length [m]
+ * @param {number} P0   - Static pressure [Pa]
+ * @param {number} tc   - Valve closure time [s]
+ * @returns {{times: number[], pressures: number[]}}  pressures in [bar]
+ */
+function pressureTimeSeries(rho, a, v0, L, P0, tc) {
+  const T_ret  = 2.0 * L / a;       // Wave round-trip time [s]
+  const dP     = effectiveDeltaP(rho, a, v0, L, tc);  // [Pa]
+  const dP_bar = dP / 1e5;
+  const P0_bar = P0 / 1e5;
+  const dt     = T_MAX / N_POINTS;
+
+  const times     = [];
+  const pressures = [];
+
+  for (let i = 0; i <= N_POINTS; i++) {
+    const t = i * dt;
+    times.push(parseFloat(t.toFixed(4)));
+
+    let P_bar;
+
+    if (tc <= T_ret) {
+      // ── Near-instant closure: square wave with exponential decay ──
+      // At t=0 pressure jumps to P0+ΔP at the valve.
+      // Every T_ret, a reflected wave arrives and the sign flips.
+      const halfIdx  = Math.floor(t / T_ret);          // which half-cycle
+      const sign     = (halfIdx % 2 === 0) ? 1.0 : -1.0;
+      const decay    = Math.exp(-ZETA * halfIdx);
+      P_bar = P0_bar + sign * dP_bar * decay;
+    } else {
+      // ── Gradual closure: smooth ramp then damped oscillation ──
+      if (t < tc) {
+        // During closure: sinusoidal build-up approximation
+        const frac = t / tc;
+        P_bar = P0_bar + dP_bar * Math.sin((Math.PI / 2.0) * frac);
+      } else {
+        // Post-closure: decaying cosine oscillations at valve
+        const t2      = t - tc;
+        const halfIdx = Math.floor(t2 / T_ret);
+        const sign    = (halfIdx % 2 === 0) ? 1.0 : -1.0;
+        const decay   = Math.exp(-ZETA * 1.5 * halfIdx);
+        P_bar = P0_bar + sign * dP_bar * 0.35 * decay;
+      }
+    }
+
+    pressures.push(parseFloat(P_bar.toFixed(3)));
+  }
+
+  return { times, pressures };
+}
+
+/**
+ * Find peak pressure and the time at which it occurs.
+ */
+function findPeak(times, pressures) {
+  let peakP = -Infinity, peakT = 0;
+  for (let i = 0; i < pressures.length; i++) {
+    if (pressures[i] > peakP) { peakP = pressures[i]; peakT = times[i]; }
+  }
+  return { peakP, peakT };
+}
+
+// ═══════════════════════════════════════════════
+// INPUT HELPERS
+// ═══════════════════════════════════════════════
+
+function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function getParams() {
+  const sliderPct = parseFloat(document.getElementById('slider-tc').value);
+  // Exponential mapping: 0→0.01s, 100→5s  (gives fine control at low end)
+  const tc = sliderPct === 0 ? 0.01 : 0.01 * Math.pow(5.0 / 0.01, sliderPct / 100);
+
+  return {
+    L    : getVal('inp-L'),
+    d    : getVal('inp-d') / 1000,        // mm → m
+    t    : getVal('inp-t') / 1000,        // mm → m
+    E    : MATERIALS[currentMaterial].E,
+    K    : getVal('inp-K'),
+    rho  : getVal('inp-rho'),
+    v0   : getVal('inp-v0'),
+    P0   : getVal('inp-P0') * 1e5,        // bar → Pa
+    Pdes : getVal('inp-Pdes') * 1e5,      // bar → Pa
+    tc   : tc
+  };
+}
+
+// ═══════════════════════════════════════════════
+// SLIDER LABEL
+// ═══════════════════════════════════════════════
+
+function updateSliderLabel() {
+  const pct = parseFloat(document.getElementById('slider-tc').value);
+  const tc  = pct === 0 ? 0.01 : 0.01 * Math.pow(500, pct / 100);
+  document.getElementById('slider-display').textContent = tc.toFixed(2) + ' s';
+
+  const p = getParams();
+  if (p.L > 0 && p.K > 0 && p.rho > 0 && p.d > 0 && p.t > 0 && p.E > 0) {
+    const a      = waveSpeed(p.K, p.rho, p.d, p.E, p.t);
+    const T_crit = 2.0 * p.L / a;
+    const note   = document.getElementById('critical-note');
+    const val    = document.getElementById('critical-val');
+    val.textContent = T_crit.toFixed(3);
+    note.classList.toggle('show', tc > T_crit);
+    document.getElementById('legend-grad-label').textContent =
+      `Current (${tc.toFixed(2)} s closure)`;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CHART
+// ═══════════════════════════════════════════════
+
+const riskZonePlugin = {
+  id: 'riskZones',
+  beforeDraw(chart, args, options) {
+    const { ctx, scales: { x, y } } = chart;
+    const Pdes = options.Pdes || 40;
+    const Pwarn = options.Pwarn || (Pdes * 0.625);
+    const left = x.left, right = x.right;
+
+    // Safe zone: 0 → Pwarn
+    ctx.fillStyle = 'rgba(30,132,73,0.07)';
+    ctx.fillRect(left, y.getPixelForValue(Pwarn), right - left,
+                 y.getPixelForValue(0) - y.getPixelForValue(Pwarn));
+
+    // Warning zone: Pwarn → Pdes
+    ctx.fillStyle = 'rgba(214,137,16,0.09)';
+    ctx.fillRect(left, y.getPixelForValue(Pdes), right - left,
+                 y.getPixelForValue(Pwarn) - y.getPixelForValue(Pdes));
+
+    // Critical zone: Pdes → yMax
+    ctx.fillStyle = 'rgba(192,57,43,0.07)';
+    ctx.fillRect(left, y.getPixelForValue(y.max), right - left,
+                 y.getPixelForValue(Pdes) - y.getPixelForValue(y.max));
+
+    // Design limit dashed line
+    const yLine = y.getPixelForValue(Pdes);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(214,137,16,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(left, yLine);
+    ctx.lineTo(right, yLine);
+    ctx.stroke();
+    ctx.restore();
+
+    // Design limit label
+    ctx.fillStyle = 'rgba(214,137,16,0.85)';
+    ctx.font = '600 10px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(`Design limit: ${Pdes} bar`, right - 4, yLine - 4);
+    ctx.textAlign = 'left';
+  }
+};
+
+function initChart() {
+  const ctx = document.getElementById('pressureChart').getContext('2d');
+  Chart.register(riskZonePlugin);
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Instant Closure',
+          data: [],
+          borderColor: '#c0392b',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.1,
+          fill: false,
+          order: 2
+        },
+        {
+          label: 'Current Closure',
+          data: [],
+          borderColor: '#1a5276',
+          borderWidth: 2.2,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          tension: 0.15,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      animation: { duration: 280, easing: 'easeOutQuart' },
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.4,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        riskZones: { Pdes: 40, Pwarn: 25 },
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1c2a',
+          titleColor: '#fff',
+          bodyColor: 'rgba(255,255,255,0.7)',
+          padding: 10,
+          callbacks: {
+            title: items => `t = ${items[0].label} s`,
+            label: item => ` ${item.dataset.label}: ${item.raw} bar`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Time (seconds)', color: '#6b6a76', font: { size: 11, weight: '600' } },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: {
+            color: '#a09fa8', font: { size: 10 }, maxTicksLimit: 11,
+            callback: v => parseFloat(v).toFixed(1)
+          }
+        },
+        y: {
+          title: { display: true, text: 'Pressure (bar)', color: '#6b6a76', font: { size: 11, weight: '600' } },
+          grid: { color: 'rgba(0,0,0,0.06)' },
+          ticks: { color: '#a09fa8', font: { size: 10 } },
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PIPE DIAGRAM (SVG)
+// ═══════════════════════════════════════════════
+
+function renderPipeDiagram(a, L, v0, rho, T_ret, dP_bar, P0_bar) {
+  const svg = document.getElementById('pipe-svg');
+  document.getElementById('pipe-param-label').textContent =
+    `a = ${Math.round(a)} m/s  ·  L = ${L} m  ·  T_ret = ${T_ret.toFixed(3)} s`;
+
+  const W = 760, stageH = 82, gap = 6;
+  const totalH = stageH * 3 + gap * 2 + 10;
+  svg.setAttribute('viewBox', `0 0 ${W} ${totalH}`);
+
+  const pipeX = 38, pipeW = 636, valveX = 672;
+  const pipeTop = 12, pipeBot = 26, fluidTop = 20, fluidH = 10;
+
+  const stages = [
+    {
+      label: `t = 0  —  Valve Closes  (ΔP = ${dP_bar.toFixed(1)} bar)`,
+      labelFill: '#c0392b',
+      fluidFill: '#c0392b', fluidOpacity: 0.14,
+      fluidX: valveX - 80, fluidW: 80,  // high-P only at valve end
+      flowArrows: true,
+      waveDir: null,
+      valveState: 'CLOSED',
+      note: `Pressure wave generated: +${dP_bar.toFixed(1)} bar`,
+    },
+    {
+      label: `t = L/a = ${(L/a).toFixed(3)} s  —  Wave Reaches Reservoir, Reflection Begins`,
+      labelFill: '#d68910',
+      fluidFill: '#c0392b', fluidOpacity: 0.11,
+      fluidX: pipeX, fluidW: pipeW,     // high-P throughout
+      flowArrows: false,
+      waveDir: 'right',                  // reflected rarefaction going right
+      valveState: 'CLOSED',
+      note: `Entire pipe at elevated pressure; rarefaction wave reflected →`,
+    },
+    {
+      label: `t = 2L/a = ${(2*L/a).toFixed(3)} s  —  Rarefaction Reaches Valve, Cycle Repeats`,
+      labelFill: '#1a5276',
+      fluidFill: '#1a5276', fluidOpacity: 0.07,
+      fluidX: pipeX, fluidW: pipeW * 0.55,
+      flowArrows: false,
+      waveDir: null,
+      valveState: 'CLOSED',
+      note: `Pressure drops to ≈ P₀ − ΔP at valve; period T = 4L/a = ${(4*L/a).toFixed(3)} s`,
+    }
+  ];
+
+  let svgContent = `<defs>
+    <marker id="arR" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
+      <polygon points="0 0,7 3,0 6" fill="#d68910"/>
+    </marker>
+  </defs>`;
+
+  stages.forEach((s, idx) => {
+    const yBase = idx * (stageH + gap);
+    const pT = yBase + pipeTop;
+    const pB = yBase + pipeBot;
+    const fT = yBase + fluidTop;
+    const labelY = yBase + 14;
+
+    // Stage label
+    svgContent += `<rect x="0" y="${yBase}" width="250" height="20" rx="4" fill="${s.labelFill}"/>`;
+    svgContent += `<text x="7" y="${labelY}" font-size="10" fill="#fff" font-weight="700">${s.label}</text>`;
+
+    // Reservoir
+    svgContent += `<rect x="8" y="${pT}" width="20" height="${pipeBot - pipeTop + fluidH}" rx="3" fill="#1a5276" opacity="0.16" stroke="#1a5276" stroke-width="1.3"/>`;
+    svgContent += `<text x="18" y="${yBase + stageH - 3}" font-size="8" fill="#1a5276" font-weight="700" text-anchor="middle">RES.</text>`;
+
+    // Pipe walls (top, bottom)
+    svgContent += `<rect x="${pipeX}" y="${pT}" width="${pipeW}" height="8" rx="2" fill="#c0bfb6"/>`;
+    svgContent += `<rect x="${pipeX}" y="${pB}" width="${pipeW}" height="8" rx="2" fill="#c0bfb6"/>`;
+    svgContent += `<rect x="${pipeX}" y="${pT + 1}" width="${pipeW}" height="3" rx="1" fill="rgba(255,255,255,0.45)"/>`;
+
+    // Fluid fill zone
+    svgContent += `<rect x="${s.fluidX}" y="${fT}" width="${s.fluidW}" height="${fluidH}" fill="${s.fluidFill}" opacity="${s.fluidOpacity}"/>`;
+
+    // Note text inside pipe
+    svgContent += `<text x="${pipeX + pipeW/2}" y="${fT + 7}" font-size="7.5" fill="${s.labelFill}" font-weight="600" text-anchor="middle" opacity="0.9">${s.note}</text>`;
+
+    // Flow arrows (stage 0 only)
+    if (s.flowArrows) {
+      [[160,fT+5],[300,fT+5],[440,fT+5]].forEach(([ax,ay]) => {
+        svgContent += `<polygon points="${ax},${ay-3} ${ax+14},${ay-3} ${ax+14},${ay-5} ${ax+20},${ay} ${ax+14},${ay+5} ${ax+14},${ay+3} ${ax},${ay+3}" fill="#1a5276" opacity="0.35"/>`;
+      });
+      svgContent += `<text x="${pipeX + pipeW*0.4}" y="${pT - 2}" font-size="7.5" fill="#1a5276" font-weight="600" text-anchor="middle">v₀ = ${v0} m/s →</text>`;
+    }
+
+    // Wave direction arrow (stage 1)
+    if (s.waveDir === 'right') {
+      const wx = pipeX + 30;
+      svgContent += `<line x1="${wx}" y1="${fT+5}" x2="${wx+120}" y2="${fT+5}" stroke="#d68910" stroke-width="2" marker-end="url(#arR)"/>`;
+      svgContent += `<text x="${wx+62}" y="${fT - 2}" font-size="7.5" fill="#d68910" font-weight="700" text-anchor="middle">reflected wave →</text>`;
+    }
+
+    // Valve
+    const vc = '#c0392b';
+    svgContent += `<rect x="${valveX}" y="${pT - 4}" width="14" height="${pipeBot - pipeTop + fluidH + 8}" rx="3" fill="${vc}" opacity="0.88"/>`;
+    svgContent += `<line x1="${valveX+7}" y1="${pT - 4}" x2="${valveX+7}" y2="${pB + 4}" stroke="#fff" stroke-width="1.4"/>`;
+    svgContent += `<text x="${valveX+19}" y="${fT+3}" font-size="7.5" fill="${vc}" font-weight="700">VALVE</text>`;
+    svgContent += `<text x="${valveX+19}" y="${fT+12}" font-size="7" fill="${vc}">${s.valveState}</text>`;
+
+    // Dimension line
+    const dlY = yBase + stageH - 12;
+    svgContent += `<line x1="${pipeX}" y1="${dlY}" x2="${valveX}" y2="${dlY}" stroke="#b8b6ae" stroke-width="0.8"/>`;
+    svgContent += `<line x1="${pipeX}" y1="${dlY-3}" x2="${pipeX}" y2="${dlY+3}" stroke="#b8b6ae" stroke-width="0.8"/>`;
+    svgContent += `<line x1="${valveX}" y1="${dlY-3}" x2="${valveX}" y2="${dlY+3}" stroke="#b8b6ae" stroke-width="0.8"/>`;
+    svgContent += `<text x="${pipeX + pipeW/2}" y="${dlY + 10}" font-size="8" fill="#a09fa8" font-weight="500" text-anchor="middle">L = ${L} m</text>`;
+  });
+
+  svg.innerHTML = svgContent;
+}
+
+// ═══════════════════════════════════════════════
+// METRICS UPDATE
+// ═══════════════════════════════════════════════
+
+function setMetric(id, value, unit = '') {
+  document.getElementById(id).textContent = value;
+}
+
+function setStatus(cardId, badgeId, level, badgeText) {
+  const card  = document.getElementById(cardId);
+  const badge = document.getElementById(badgeId);
+  card.className  = `metric-card ${level}`;
+  badge.className = `metric-badge badge-${level}`;
+  badge.textContent = badgeText;
+}
+
+function updateMetrics(a, L, v0, rho, tc, P0_bar, Pdes_bar, dP_bar, peakP, peakT) {
+  // Peak pressure
+  setMetric('met-peak', peakP.toFixed(1));
+  setMetric('met-peak-sub', `vs ${(P0_bar).toFixed(1)} bar static`);
+  if (peakP <= Pdes_bar * 0.625) {
+    setStatus('card-peak', 'badge-peak', 'safe', 'Safe');
+  } else if (peakP <= Pdes_bar) {
+    setStatus('card-peak', 'badge-peak', 'warn', 'Warning');
+  } else {
+    setStatus('card-peak', 'badge-peak', 'crit', 'Critical');
+  }
+
+  // Time to peak
+  setMetric('met-tpeak', peakT.toFixed(3));
+  setMetric('met-tpeak-sub', `Wave return: ${(2*L/a).toFixed(3)} s`);
+  document.getElementById('badge-time').textContent = peakT < 0.5 ? 'Rapid' : 'Gradual';
+
+  // Oscillation period T = 4L/a
+  const T_osc = 4.0 * L / a;
+  setMetric('met-freq', T_osc.toFixed(3));
+  setMetric('met-freq-sub', `f = ${(1/T_osc).toFixed(3)} Hz  |  T_ret = ${(2*L/a).toFixed(3)} s`);
+
+  // Safety margin
+  const margin = ((Pdes_bar - peakP) / Pdes_bar) * 100;
+  setMetric('met-margin', margin.toFixed(1));
+  setMetric('met-margin-sub', `Peak: ${peakP.toFixed(1)} bar vs ${Pdes_bar.toFixed(1)} bar limit`);
+  if (margin >= 30) {
+    setStatus('card-margin', 'badge-margin', 'safe', 'Adequate');
+  } else if (margin >= 0) {
+    setStatus('card-margin', 'badge-margin', 'warn', 'Tight');
+  } else {
+    setStatus('card-margin', 'badge-margin', 'crit', 'Exceeded');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// WAVE SPEED DISPLAY
+// ═══════════════════════════════════════════════
+
+function updateWaveSpeedDisplay(a) {
+  document.getElementById('wave-speed-display').textContent =
+    isFinite(a) ? Math.round(a).toLocaleString() : '—';
+}
+
+// ═══════════════════════════════════════════════
+// MAIN CALCULATE
+// ═══════════════════════════════════════════════
+
+function calculate() {
+  const p = getParams();
+
+  // Validate inputs
+  if (p.L <= 0 || p.d <= 0 || p.t <= 0 || p.K <= 0 || p.rho <= 0 || p.v0 <= 0) {
+    alert('Please enter valid positive values for all inputs.');
+    return;
+  }
+  if (p.t >= p.d / 2) {
+    alert('Wall thickness must be less than inner radius (d/2).');
+    return;
+  }
+
+  // ── Physics calculations ──
+  const a      = waveSpeed(p.K, p.rho, p.d, p.E, p.t);
+  const T_ret  = 2.0 * p.L / a;
+  const dP     = effectiveDeltaP(p.rho, a, p.v0, p.L, p.tc);
+  const dP_bar = dP / 1e5;
+  const P0_bar = p.P0 / 1e5;
+  const Pdes_bar = p.Pdes / 1e5;
+
+  // Generate series: instant closure (tc=0.01) + current tc
+  const instant  = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, 0.01);
+  const current  = pressureTimeSeries(p.rho, a, p.v0, p.L, p.P0, p.tc);
+
+  const { peakP: instPeak, peakT: instPeakT } = findPeak(instant.times, instant.pressures);
+  const { peakP, peakT }                       = findPeak(current.times, current.pressures);
+
+  // ── Update wave speed readout ──
+  updateWaveSpeedDisplay(a);
+
+  // ── Update chart ──
+  const Pmax = Math.max(
+    Math.max(...instant.pressures),
+    Math.max(...current.pressures),
+    Pdes_bar + 5
+  );
+  const Pmin = Math.min(
+    Math.min(...instant.pressures),
+    Math.min(...current.pressures),
+    P0_bar - 2,
+    0
+  );
+
+  chart.data.labels        = instant.times;
+  chart.data.datasets[0].data = instant.pressures;
+  chart.data.datasets[1].data = current.pressures;
+  chart.data.datasets[1].label = `Closure: ${p.tc.toFixed(2)} s`;
+
+  chart.options.plugins.riskZones.Pdes  = Pdes_bar;
+  chart.options.plugins.riskZones.Pwarn = Pdes_bar * 0.625;
+  chart.options.scales.y.min = Math.floor(Pmin) - 1;
+  chart.options.scales.y.max = Math.ceil(Pmax) + 2;
+
+  chart.update();
+
+  // ── Update metrics (show current closure scenario) ──
+  updateMetrics(a, p.L, p.v0, p.rho, p.tc, P0_bar, Pdes_bar, dP_bar, peakP, peakT);
+
+  // ── Update pipe diagram ──
+  renderPipeDiagram(a, p.L, p.v0, p.rho, T_ret, dP_bar, P0_bar);
+}
+
+// ═══════════════════════════════════════════════
+// EVENT LISTENERS
+// ═══════════════════════════════════════════════
+
+// Material toggle
+document.querySelectorAll('.mat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMaterial = btn.dataset.mat;
+    calculate();
+  });
+});
+
+// Slider — live update
+document.getElementById('slider-tc').addEventListener('input', () => {
+  updateSliderLabel();
+  calculate();
+});
+
+// All numeric inputs — recalculate on change
+['inp-L','inp-d','inp-t','inp-v0','inp-K','inp-rho','inp-P0','inp-Pdes'].forEach(id => {
+  document.getElementById(id).addEventListener('change', calculate);
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+
+initChart();
+updateSliderLabel();
+calculate();
+</script>
+</body>
+</html>
